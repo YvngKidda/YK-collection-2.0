@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>YK Collection</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+<nav id="mainNav">
+  <div class="nav-logo" onclick="go('shop')"><div class="yk-icon">YK</div><span class="l2">Collection</span></div>
+  <div class="nav-center">
+    <button class="nav-link" onclick="go('shop')">Home</button>
+    <div class="nav-dd"><button class="nav-link">Clothing &#9662;</button>
+      <div class="nav-dd-menu"><div class="dd-lbl">Clothing</div>
+        <button class="dd-item" onclick="filterGo('clothing-male')">Male</button>
+        <button class="dd-item" onclick="filterGo('clothing-female')">Female</button>
+      </div>
+    </div>
+    <div class="nav-dd"><button class="nav-link">Shoes &#9662;</button>
+      <div class="nav-dd-menu"><div class="dd-lbl">Shoes</div>
+        <button class="dd-item" onclick="filterGo('shoes-male')">Male</button>
+        <button class="dd-item" onclick="filterGo('shoes-female')">Female</button>
+        <button class="dd-item" onclick="filterGo('bags-male')">Male Bags</button>
+        <button class="dd-item" onclick="filterGo('watches-male')">Male Watches</button>
+        <button class="dd-item" onclick="filterGo('watches-female')">Female Watches</button>
+      </div>
+    </div>
+    <button class="nav-link" onclick="go('about')">About</button>
+    <button class="nav-link" onclick="go('contact')">Contact</button>
+    <button class="nav-link" onclick="go('feedback')" style="font-size:.82rem">Feedback</button>
+  </div>
+  <div class="nav-right">
+    <button class="theme-toggle" onclick="toggleTheme()">&#9790;</button>
+    <button class="cart-btn" onclick="toggleCart()">Cart <span class="cart-count" id="cc1">0</span></button>
+    <button class="mobile-cart" onclick="toggleCart()">Cart <span class="cart-count" id="cc2">0</span></button>
+    <button class="hamburger" id="burger" onclick="toggleMenu()"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="mob-menu" id="mobMenu">
+  <button class="nav-link" onclick="go('shop');closeMob()">Home</button>
+
+  <div><button class="nav-link" onclick="toggleSub('sm')">Men &#9662;</button>
+    <div class="mob-sub" id="sm">
+      <button class="nav-link" onclick="filterGo('clothing-male');closeMob()">Clothing</button>
+      <button class="nav-link" onclick="filterGo('shoes-male');closeMob()">Shoes</button>
+      <button class="nav-link" onclick="filterGo('bags-male');closeMob()">Bags</button>
+      <button class="nav-link" onclick="filterGo('watches-male');closeMob()">Watches &amp; Accessories</button>
+    </div>
+  </div>
+  <div><button class="nav-link" onclick="toggleSub('sw')">Women &#9662;</button>
+    <div class="mob-sub" id="sw">
+      <button class="nav-link" onclick="filterGo('clothing-female');closeMob()">Clothing</button>
+      <button class="nav-link" onclick="filterGo('shoes-female');closeMob()">Shoes</button>
+      <button class="nav-link" onclick="filterGo('bags-female');closeMob()">Bags</button>
+      <button class="nav-link" onclick="filterGo('watches-female');closeMob()">Watches</button>
+      <button class="nav-link" onclick="filterGo('jewelry-female');closeMob()">Jewelry &amp; Accessories</button>
+    </div>
+  </div>
+  <button class="nav-link" onclick="go('about');closeMob()">About</button>
+  <button class="nav-link" onclick="go('contact');closeMob()">Contact</button>
+  <button class="nav-link" onclick="go('feedback');closeMob()">Feedback</button>
+</div>
+<div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
+<div class="cart-panel" id="cartPanel">
+  <div class="cart-hdr"><div><h2>Your Cart</h2><div class="cart-hdr-sub" id="cartSubtitle">0 items</div></div><button class="close-cart" onclick="toggleCart()">&#10005;</button></div>
+  <div class="cart-items" id="cartItems"><div class="cart-empty"><div class="cart-empty-icon">&#128722;</div><p>Your cart is empty</p></div></div>
+  <div class="cart-ftr"><div class="cart-total-row"><span class="cart-total-lbl">Total</span><span class="cart-total-val" id="cartTotal">&#8358;0</span></div><button class="co-btn" onclick="checkout()">Order via WhatsApp</button></div>
+</div>
+<div id="landing" class="page active">
+  <canvas id="particleCanvas"></canvas>
+  <div class="land-grid"></div><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div>
+  <div class="land-badge">&#10022; New Collection 2026</div>
+  <h1 class="land-title"><span class="t1">YK</span><span class="t2">Collection</span></h1>
+  <p class="land-sub">Premium fashion for those who wear their confidence. Style that speaks before you do.</p>
+  <div class="land-actions">
+    <button class="land-btn-pri" onclick="go('shop')">Start Shopping &#8594;</button>
+    <button class="land-btn-sec" onclick="go('about')">Our Story</button>
+  </div>
+  <div class="land-features">
+    <div class="land-feat"><div class="land-feat-icon">&#128666;</div><div class="land-feat-txt"><div class="land-feat-title">Nationwide Delivery</div><div class="land-feat-sub">We deliver to all 36 states</div></div></div>
+    <div class="land-feat"><div class="land-feat-icon">&#128172;</div><div class="land-feat-txt"><div class="land-feat-title">WhatsApp Orders</div><div class="land-feat-sub">Quick &amp; easy checkout</div></div></div>
+    <div class="land-feat"><div class="land-feat-icon">&#10024;</div><div class="land-feat-txt"><div class="land-feat-title">Premium Quality</div><div class="land-feat-sub">Handpicked every piece</div></div></div>
+    <div class="land-feat"><div class="land-feat-icon">&#128081;</div><div class="land-feat-txt"><div class="land-feat-title">Men &amp; Women</div><div class="land-feat-sub">Clothing &amp; footwear</div></div></div>
+  </div>
+</div>
+<div id="shop" class="page">
+  <div class="shop-hero"><h1 class="reveal">Our <span>Collection</span></h1><p class="reveal">Handpicked styles for every occasion</p></div>
+  <div class="search-wrap">
+    <span class="search-icon">&#128269;</span>
+    <input class="search-box" id="searchBox" placeholder="Search products, categories, colors..." oninput="handleSearch()"/>
+    <button class="search-clear" id="searchClear" onclick="clearSearch()">&#10005;</button>
+  </div>
+  <div class="shop-body">
+    <div class="shop-filter-bar" id="shopFilterBar"></div>
+    <div class="prod-grid" id="prodGrid"></div>
+  </div>
+  <div class="newsletter-section">
+    <div class="newsletter-icon">&#128172;</div>
+    <div class="newsletter-title">Join Our WhatsApp List</div>
+    <p class="newsletter-sub">Be the first to know about new arrivals, exclusive deals, and special offers. Join our WhatsApp update list today!</p>
+    <button class="newsletter-btn" onclick="joinWhatsApp()">&#128172; Join on WhatsApp</button>
+  </div>
+</div>
+<div id="product-detail" class="page">
+  <div class="det-inner">
+    <button class="back-btn" onclick="go('shop')">&#8592; Back to Shop</button>
+    <div class="det-grid">
+      <div class="det-gallery" id="detGallery"></div>
+      <div class="det-info">
+        <div class="det-badge" id="detBadge"></div>
+        <h1 class="det-name" id="detName"></h1>
+        <div class="det-price" id="detPrice"></div>
+               <div class="sec-lbl">Select Size</div>
+        <div class="sizes" id="sizesWrap"></div>
+        <div class="ship-box"><span style="font-size:1.4rem">&#128666;</span><div><div class="ship-txt">Nationwide Delivery &#9989;</div><div class="ship-sub">We deliver to all states in Nigeria</div></div></div>
+        <div class="det-actions">
+          <button class="buy-now-btn" onclick="buyNow()">&#128172; Buy Now</button>
+          <button class="atc-btn" onclick="addFromDetail()">&#128722; Add to Cart</button>
+        </div>
+        <div class="det-meta" id="detMeta"></div>
+        <div class="det-desc"><div class="det-desc-lbl">Description</div><div class="det-desc-txt" id="detDesc"></div></div>
+        <div class="reviews-section" id="detReviewsSection"><div class="reviews-hdr"><div class="reviews-title">Customer Reviews</div><button class="add-review-btn" onclick="openReviewForm()">+ Write a Review</button></div><div class="reviews-summary" id="reviewsSummary" style="display:none"></div><div class="review-form" id="reviewForm"><div class="review-stars-pick" id="starPicker"><span class="star-pick" onmouseover="hoverStar(1)" onmouseout="unhoverStar()" onclick="updateStarPicker(1)">&#9733;</span><span class="star-pick" onmouseover="hoverStar(2)" onmouseout="unhoverStar()" onclick="updateStarPicker(2)">&#9733;</span><span class="star-pick" onmouseover="hoverStar(3)" onmouseout="unhoverStar()" onclick="updateStarPicker(3)">&#9733;</span><span class="star-pick" onmouseover="hoverStar(4)" onmouseout="unhoverStar()" onclick="updateStarPicker(4)">&#9733;</span><span class="star-pick" onmouseover="hoverStar(5)" onmouseout="unhoverStar()" onclick="updateStarPicker(5)">&#9733;</span></div><input class="review-f-inp" id="reviewName" placeholder="Your name"/><textarea class="review-f-ta" id="reviewText" placeholder="Write your review (optional)..."></textarea><div style="display:flex;gap:.75rem"><button class="review-submit-btn" onclick="submitReview()">Submit Review</button><button class="review-submit-btn" style="background:var(--text3)" onclick="closeReviewForm()">Cancel</button></div></div><div id="reviewsList"><div class="no-reviews">No reviews yet. Be the first!</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="about" class="page">
+  <div class="inner">
+    <div class="pg-hdr reveal"><div class="pg-eyebrow">Our Story</div><h1 class="pg-title">About <span>YK Collection</span></h1><p class="pg-sub">Our values, our vision, our promise to you</p></div>
+    <div class="about-grid">
+      <div class="about-img reveal" style="font-size:6rem">&#128247;</div>
+      <div class="about-txt reveal">
+        <h2>We Dress You With Confidence</h2>
+        <p>YK Collection was born from a simple belief - everyone deserves to look and feel extraordinary. We curate premium clothing and footwear that blends style, comfort, and quality.</p>
+        <p>From casual everyday wear to statement pieces, every item is hand-selected so you always look and feel your absolute best.</p>
+        <button class="atc-btn" style="width:auto;padding:.9rem 2.2rem;margin-top:.75rem" onclick="go('shop')">Shop Now &#8594;</button>
+      </div>
+    </div>
+    <div class="vals">
+      <div class="val-card" style="animation-delay:.05s"><div class="val-icon">&#10024;</div><div class="val-ttl">Premium Quality</div><p class="val-txt">Every piece selected for quality, durability, and style. We never compromise.</p></div>
+      <div class="val-card" style="animation-delay:.15s"><div class="val-icon">&#128666;</div><div class="val-ttl">Nationwide Delivery</div><p class="val-txt">We deliver to every state in Nigeria. Fast, reliable, right to your doorstep.</p></div>
+      <div class="val-card" style="animation-delay:.25s"><div class="val-icon">&#128172;</div><div class="val-ttl">Personal Service</div><p class="val-txt">Order via WhatsApp for a personal shopping experience like no other.</p></div>
+    </div>
+  
+    <div class="disclaimer-section">
+      <div class="disclaimer-title">&#9432; Legal Disclaimer &amp; Disclosure</div>
+      <div class="disclaimer-text">
+        <p>YK Collection is an independent retail business. We are not affiliated with, endorsed by, sponsored by, or in any way officially connected to any of the brands, designers, or manufacturers whose products may appear on this platform.</p>
+        <p>All brand names, trademarks, logos, and product names referenced on this website are the property of their respective owners and are used solely for descriptive and identification purposes. Their use does not imply any affiliation with or endorsement by those brand owners.</p>
+        <p>YK Collection does not claim to be an authorized dealer, official retailer, or licensed distributor of any third-party brand. All products listed are sourced and sold independently through lawful commercial channels.</p>
+        <p>All product images displayed are for illustrative purposes only. Customers are advised to review product details carefully before making a purchase. YK Collection makes no warranty regarding the authenticity of third-party branded goods unless explicitly stated.</p>
+        <p style="font-style:italic">If you have any concerns regarding intellectual property rights, please contact us directly via WhatsApp or email.</p>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="contact" class="page">
+  <div class="inner">
+    <div class="pg-hdr reveal"><div class="pg-eyebrow">Reach Out</div><h1 class="pg-title">Get In <span>Touch</span></h1><p class="pg-sub">We would love to hear from you</p></div>
+    <div class="contact-grid">
+      <div class="contact-info reveal">
+        <h2>Let's Talk</h2>
+        <p>Question about sizing, delivery, or a product? Send us a message and we will get back to you quickly.</p>
+        <div class="ci-item"><div class="ci-icon">&#128172;</div><div><div class="ci-lbl">WhatsApp</div><div class="ci-val">+234 901 422 3167</div></div></div>
+        <div class="ci-item"><div class="ci-icon">&#128140;</div><div><div class="ci-lbl">Email</div><div class="ci-val"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="68000d0404072811030b0704040d0b1c010706460b0705">[email&#160;protected]</a></div></div></div>
+        <div class="ci-item"><div class="ci-icon">&#9200;</div><div><div class="ci-lbl">Hours</div><div class="ci-val">Mon-Sat: 8am - 8pm WAT</div></div></div>
+      </div>
+      <div class="cf reveal">
+        <div id="cfWrap">
+          <div class="f-row">
+            <div class="f-grp"><label class="f-lbl">First Name</label><input class="f-inp" id="fn" placeholder="John"/></div>
+            <div class="f-grp"><label class="f-lbl">Last Name</label><input class="f-inp" id="ln" placeholder="Doe"/></div>
+          </div>
+          <div class="f-grp"><label class="f-lbl">Email</label><input class="f-inp" type="email" id="em" placeholder="you@email.com"/></div>
+          <div class="f-grp"><label class="f-lbl">Message</label><textarea class="f-ta" id="ms" placeholder="How can we help?"></textarea></div>
+          <button class="sub-btn" onclick="submitForm()">Send Message</button>
+        </div>
+        <div class="form-ok" id="fOk"><div class="form-ok-ic">&#127881;</div><h3>Message Sent!</h3><p>We will get back to you within a few hours.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="feedback" class="page">
+  <div class="complaints-section">
+    <div class="pg-hdr reveal"><div class="pg-eyebrow">Your Voice Matters</div><h1 class="pg-title">Complaints &amp; <span>Suggestions</span></h1><p class="pg-sub">Share your experience and help us serve you better</p></div>
+    <div class="comp-card reveal">
+      <div class="comp-title">What would you like to share?</div>
+      <div class="comp-type-tabs">
+        <button class="comp-tab active" onclick="setCompType('complaint',this)">&#128532; Complaint</button>
+        <button class="comp-tab" onclick="setCompType('suggestion',this)">&#128161; Suggestion</button>
+        <button class="comp-tab" onclick="setCompType('compliment',this)">&#127881; Compliment</button>
+      </div>
+      <div id="compFormWrap">
+        <div class="comp-f-grp"><label class="comp-f-lbl">Your Name</label><input class="comp-f-inp" id="compName" placeholder="Enter your name"/></div>
+        <div class="comp-f-grp"><label class="comp-f-lbl">Your Message</label><textarea class="comp-f-ta" id="compMsg" placeholder="Tell us what's on your mind..."></textarea></div>
+        <button class="comp-submit-btn" onclick="submitComplaint()">Send Message &#8594;</button>
+      </div>
+      <div class="comp-ok" id="compOk">
+        <div class="comp-ok-ic">&#127881;</div>
+        <h3>Thank You!</h3>
+        <p>Your message has been received. We truly appreciate your feedback.</p>
+        <button class="comp-submit-btn" style="margin-top:1rem" onclick="resetCompForm()">Send Another</button>
+      </div>
+    </div>
+  </div>
+</div>
+<footer id="mainFtr">
+  <div class="ft">
+    <div class="ft-top">
+      <div><div class="ft-logo"><span class="l1">YK </span><span class="l2">Collection</span></div><div class="ft-tagline">Premium fashion. Delivered nationwide.</div></div>
+      <div class="ft-links"><button onclick="go('shop')">Shop</button><button onclick="go('about')">About</button><button onclick="go('contact')">Contact</button><button onclick="go('feedback')">Feedback</button></div>
+    </div>
+    <div class="ft-bottom"><div class="ft-copy" id="adminTrigger" onclick="handleAdminTrigger()" style="cursor:default">&#169; 2026 YK Collection. All rights reserved.</div></div>
+  </div>
+</footer>
+<div class="toast" id="toast"></div>
+<div class="wa-float" id="waFloat"><button class="wa-float-btn" onclick="window.open('https://wa.me/2349014223167','_blank')">&#128172;<div class="wa-float-tooltip">Chat with us</div></button></div>
+<div class="admin-overlay" id="adminOverlay">
+  <div class="admin-login-box">
+    <div class="admin-login-icon">&#128274;</div>
+    <h2 class="admin-login-title">Admin Access</h2>
+    <p class="admin-login-sub">Enter your password to continue</p>
+    <input class="admin-pass-inp" type="password" id="adminPassInput" placeholder="Password"/>
+    <div class="admin-pass-err" id="adminPassErr">Incorrect password. Try again.</div>
+    <button class="admin-pass-btn" onclick="submitAdminPass()">Login</button>
+    <button class="admin-pass-cancel" onclick="closeAdminLogin()">Cancel</button>
+  </div>
+</div>
+<div class="edit-modal-overlay" id="editModalOverlay">
+  <div class="edit-modal">
+    <div class="edit-modal-hdr"><div class="edit-modal-title">&#9998; Edit Product</div><button class="edit-modal-close" onclick="closeEditModal()">&#10005;</button></div>
+    <div class="admin-form-grid">
+      <div class="admin-f-grp"><label class="admin-f-lbl">Product Name *</label><input class="admin-f-inp" id="eName"/></div>
+      <div class="admin-f-grp"><label class="admin-f-lbl">Category *</label><select class="admin-f-inp" id="eCat"><option value="clothing-male">Male Clothing</option><option value="clothing-female">Female Clothing</option><option value="shoes-male">Male Shoes</option><option value="shoes-female">Female Shoes</option><option value="bags-male">Male Bags</option><option value="watches-male">Male Watches</option><option value="watches-female">Female Watches</option><option value="jewelry-female">Female Jewelry</option>
+        <option value="jerseys">Jerseys (Unisex)</option></select></div>
+      <div class="admin-f-grp"><label class="admin-f-lbl">Price (&#8358;) *</label><input class="admin-f-inp" type="number" id="ePrice"/></div>
+      <div class="admin-f-grp"><label class="admin-f-lbl">Old Price (&#8358;)</label><input class="admin-f-inp" type="number" id="eOldPrice"/></div>
+      <div class="admin-f-grp"><label class="admin-f-lbl">Badge</label><select class="admin-f-inp" id="eBadge"><option value="">None</option><option value="new">NEW</option><option value="sale">SALE</option><option value="limited">LIMITED</option></select></div>
+      <div class="admin-f-grp"><label class="admin-f-lbl">Sizes * (comma separated)</label><input class="admin-f-inp" id="eSizes"/></div>
+      <div class="admin-f-grp"><label class="admin-f-lbl">Color</label><input class="admin-f-inp" id="eColor"/></div>
+      <div class="admin-f-grp"><label class="admin-f-lbl">Material</label><input class="admin-f-inp" id="eMaterial"/></div>
+      <div class="admin-f-grp"><label class="admin-f-lbl">Emoji</label><input class="admin-f-inp" id="eEmoji"/></div>
+      <div class="admin-f-grp"><label class="admin-f-lbl">Image URL</label><input class="admin-f-inp" id="eImgUrl"/></div>
+        <div class="admin-f-grp" style="grid-column:1/-1"><label class="admin-f-lbl">Extra Photos (one per line)</label><textarea class="admin-f-inp" id="eImgGallery" style="height:90px;resize:none" placeholder="Upload below"></textarea><input type="file" id="eExtraFiles" accept="image/*" multiple style="display:none" onchange="handleMultiImgUpload(this,'eImgGallery')"><button onclick="document.getElementById('eExtraFiles').click()" style="margin-top:.4rem;width:100%;padding:.65rem;border-radius:var(--r-sm);background:var(--sky-light);border:1.5px dashed var(--sky);color:var(--sky-dark);font-family:'DM Sans',sans-serif;font-size:.85rem;cursor:pointer;font-weight:600">&#128248; Upload Multiple Photos</button><div class="admin-gallery-hint">Select multiple photos at once</div></div>
+    </div>
+    <div class="admin-f-grp" style="margin-top:.5rem"><label class="admin-f-lbl">Product Description</label><textarea class="admin-f-inp" id="eDesc" style="height:80px;resize:none"></textarea></div>
+    <button class="edit-save-btn" onclick="saveEditProduct()">&#10003; Save Changes</button>
+  </div>
+</div>
+<div id="admin" class="page">
+  <div class="admin-inner">
+    <div class="admin-hdr">
+      <div><div class="admin-eyebrow">&#128274; Admin Panel</div><h1 class="admin-title">Manage Store</h1></div>
+      <div class="admin-hdr-btns">
+        <button class="admin-view-btn" onclick="go('shop')">&#128065; View Store</button>
+        <button class="admin-logout-btn" onclick="logoutAdmin()">Logout</button>
+      </div>
+    </div>
+    <div class="admin-form-card">
+      <h2 class="admin-section-title">&#10133; Add New Product</h2>
+      <div class="admin-form-grid">
+        <div class="admin-f-grp"><label class="admin-f-lbl">Product Name *</label><input class="admin-f-inp" id="aName" placeholder="e.g. Classic White Polo"/></div>
+        <div class="admin-f-grp"><label class="admin-f-lbl">Category *</label><select class="admin-f-inp" id="aCat"><option value="clothing-male">Male Clothing</option><option value="clothing-female">Female Clothing</option><option value="shoes-male">Male Shoes</option><option value="shoes-female">Female Shoes</option><option value="bags-male">Male Bags</option><option value="watches-male">Male Watches</option><option value="watches-female">Female Watches</option><option value="jewelry-female">Female Jewelry</option>
+        <option value="jerseys">Jerseys (Unisex)</option></select></div>
+        <div class="admin-f-grp"><label class="admin-f-lbl">Price (&#8358;) *</label><input class="admin-f-inp" type="number" id="aPrice" placeholder="e.g. 15000"/></div>
+        <div class="admin-f-grp"><label class="admin-f-lbl">Old Price (&#8358;)</label><input class="admin-f-inp" type="number" id="aOldPrice" placeholder="e.g. 20000"/></div>
+        <div class="admin-f-grp"><label class="admin-f-lbl">Badge</label><select class="admin-f-inp" id="aBadge"><option value="">None</option><option value="new">NEW</option><option value="sale">SALE</option><option value="limited">LIMITED</option></select></div>
+        <div class="admin-f-grp"><label class="admin-f-lbl">Sizes * (comma separated)</label><input class="admin-f-inp" id="aSizes" placeholder="e.g. S, M, L, XL"/></div>
+        <div class="admin-f-grp"><label class="admin-f-lbl">Color</label><input class="admin-f-inp" id="aColor" placeholder="e.g. Black"/></div>
+        <div class="admin-f-grp"><label class="admin-f-lbl">Material</label><input class="admin-f-inp" id="aMaterial" placeholder="e.g. Cotton"/></div>
+        <div class="admin-f-grp"><label class="admin-f-lbl">Emoji</label><input class="admin-f-inp" id="aEmoji" placeholder="e.g. &#128085;"/></div>
+        <div class="admin-f-grp"><label class="admin-f-lbl">Image URL (optional)</label><input class="admin-f-inp" id="aImgUrl" placeholder="Paste URL or upload below"/><input type="file" id="aImgFile" accept="image/*" style="display:none" onchange="handleAdminImgUpload(this,'aImgUrl','aImgPreview')"><button onclick="document.getElementById('aImgFile').click()" style="margin-top:.4rem;width:100%;padding:.65rem;border-radius:var(--r-sm);background:var(--sky-light);border:1.5px dashed var(--sky);color:var(--sky-dark);font-family:'DM Sans',sans-serif;font-size:.85rem;cursor:pointer;font-weight:600">&#128247; Upload Main Photo</button><div id="aImgPreview" style="margin-top:.4rem"></div></div>
+        <div class="admin-f-grp" style="grid-column:1/-1"><label class="admin-f-lbl">Extra Photos (one per line)</label><textarea class="admin-f-inp" id="aImgGallery" style="height:90px;resize:none" placeholder="Upload below"></textarea><input type="file" id="aExtraFiles" accept="image/*" multiple style="display:none" onchange="handleMultiImgUpload(this,'aImgGallery')"><button onclick="document.getElementById('aExtraFiles').click()" style="margin-top:.4rem;width:100%;padding:.65rem;border-radius:var(--r-sm);background:var(--sky-light);border:1.5px dashed var(--sky);color:var(--sky-dark);font-family:'DM Sans',sans-serif;font-size:.85rem;cursor:pointer;font-weight:600">&#128248; Upload Multiple Photos</button><div class="admin-gallery-hint">Select multiple photos at once</div></div>
+      </div>
+      <div class="admin-f-grp"><label class="admin-f-lbl">Product Description</label><textarea class="admin-f-inp" id="aDesc" style="height:80px;resize:none" placeholder="Describe this product..."></textarea></div>
+      <div class="admin-form-actions" style="margin-top:1rem">
+        <button class="admin-add-btn" onclick="addAdminProduct()">&#10133; Add Product</button>
+        <button class="admin-clear-btn" onclick="clearAdminForm()">&#10006; Clear</button>
+      </div>
+    </div>
+    <div class="admin-list-card">
+      <h2 class="admin-section-title">&#128230; Current Products</h2>
+      <div id="adminProdList"></div>
+    </div>
+    <div class="admin-list-card" style="margin-top:1.5rem">
+      <h2 class="admin-section-title">&#127991; Manage Categories</h2>
+      <div id="adminCatManager"></div>
+    </div>
+    <div class="admin-list-card" style="margin-top:1.5rem">
+      <h2 class="admin-section-title">&#128172; Customer Feedback</h2>
+      <div id="adminCompList"><div class="admin-no-comp">No messages yet from customers.</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">&#10005;</button>
+  <button class="lightbox-arrow prev" onclick="lbPrev()">&#8592;</button>
+  <div class="lightbox-img-wrap" id="lbImgWrap">
+    <div class="lightbox-img" id="lbImg"></div>
+  </div>
+  <button class="lightbox-arrow next" onclick="lbNext()">&#8594;</button>
+  <div class="lightbox-thumbs" id="lbThumbs"></div>
+  <div class="lightbox-counter" id="lbCounter"></div>
+  <div class="lightbox-zoom-hint" id="lbZoomHint">Pinch or scroll to zoom</div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
