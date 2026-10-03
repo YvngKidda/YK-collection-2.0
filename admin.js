@@ -12,9 +12,11 @@
 'use strict';
 
 const adminState = { isAdmin: false, email: null };
-// addImages: URLs uploaded in the "Add product" form but not saved yet
-// edit: { id, original: [urls in DB], images: [urls currently in the edit form] }
-const adminForm = { addImages: [], edit: null, uploading: 0 };
+// Two photo lists per form:  img = normal product photos,  spin = 360° frames (in rotation order)
+//   add:  lists for the "Add product" form (uploaded but not saved yet)
+//   edit: { id, orig:{img,spin} = what is saved in the DB, img, spin = what the form holds now }
+const adminForm = { add: { img: [], spin: [] }, edit: null, uploading: 0 };
+const MIN_SPIN_FRAMES = 4;
 
 const uid = () => (window.crypto && crypto.randomUUID)
   ? crypto.randomUUID()
@@ -23,6 +25,7 @@ const uid = () => (window.crypto && crypto.randomUUID)
 // Turn a Supabase error into something readable on a phone screen.
 function dbMsg(error) {
   const m = (error && error.message) || String(error);
+  if (/size_surcharges|spin_images|spin_enabled|schema cache|does not exist/i.test(m)) return 'Run supabase-migration-2.sql in Supabase first.';
   if (/row-level security|permission denied|jwt|PGRST116|not allowed/i.test(m)) return 'Not allowed \u2014 log in as admin again.';
   return m;
 }
@@ -109,7 +112,7 @@ async function logoutAdmin() {
 
 function enterAdminPanel() {
   go('admin');
-  renderImgStrip('add');
+  renderStrips('add');
   renderAdminProducts();
   renderAdminCatManager();
   loadAdminFeedback();
@@ -125,9 +128,35 @@ function handleAdminTrigger() {
 }
 
 /* ════════════════════════════════════════════════════════════════
+   SIZES WITH OPTIONAL PRICE INCREASES
+   "S, M, L+1000, XL+2000"  →  sizes S/M/L/XL, and L costs ₦1,000 more, XL ₦2,000 more
+   ════════════════════════════════════════════════════════════════ */
+function parseSizes(text) {
+  const cleaned = String(text || '').replace(/(\+\s*\d+),(?=\d{3}\b)/g, '$1');   // allow "L+1,000"
+  const sizes = [], add = {};
+  for (const raw of cleaned.split(',')) {
+    const t = raw.trim();
+    if (!t) continue;
+    const m = t.match(/^(.+?)\s*\+\s*(\d+)$/);
+    const name = (m ? m[1] : t).trim();
+    if (!name) return { error: 'Check the sizes: a size name is missing' };
+    if (name.length > 20) return { error: `Size "${name.slice(0, 12)}\u2026" is too long` };
+    if (/[+]/.test(name)) return { error: `Check the size "${name}". Use the form L+1000` };
+    if (sizes.includes(name)) continue;
+    sizes.push(name);
+    if (m && Number(m[2]) > 0) add[name] = Number(m[2]);
+  }
+  if (!sizes.length) return { error: 'Please enter at least one size' };
+  return { sizes, add };
+}
+function formatSizes(p) {
+  return p.sizes.map((s) => (p.sizeAdd && p.sizeAdd[s] ? `${s}+${p.sizeAdd[s]}` : s)).join(', ');
+}
+
+/* ════════════════════════════════════════════════════════════════
    PHOTOS: gallery → compress → Supabase Storage → public URL
    ════════════════════════════════════════════════════════════════ */
-// Shrinks big phone photos (often 4–10 MB) to a ~300 KB JPEG before uploading.
+// Shrinks big phone photos (often 4–10 MB) to a small JPEG before uploading.
 async function fileToJpegBlob(file, maxSide = 1600, quality = 0.82) {
   if (!file.type || file.type.indexOf('image/') !== 0) throw new Error('That file is not an image');
   let src, w, h, cleanup = () => {};
@@ -161,10 +190,12 @@ async function fileToJpegBlob(file, maxSide = 1600, quality = 0.82) {
 }
 
 // Uploads ONE image file to the 'product-images' bucket and returns its public URL.
-async function uploadProductImage(file) {
-  const blob = await fileToJpegBlob(file);
+// 360° frames are shrunk harder (there are many of them per product).
+async function uploadProductImage(file, kind) {
+  const spin = kind === 'spin';
+  const blob = await fileToJpegBlob(file, spin ? 1100 : 1600, spin ? 0.78 : 0.82);
   const day = new Date().toISOString().slice(0, 10);
-  const path = `products/${day}/${uid()}.jpg`;              // unique name → no overwrites, safe to cache
+  const path = `${spin ? 'spin' : 'products'}/${day}/${uid()}.jpg`;   // unique name → no overwrites, safe to cache
   const { error } = await sb.storage.from(STORAGE_BUCKET).upload(path, blob, {
     contentType: 'image/jpeg', cacheControl: '31536000', upsert: false
   });
@@ -185,39 +216,79 @@ async function deleteStoredImages(urls) {                   // best effort; fail
   if (error) console.warn('Could not delete old images:', error.message);
 }
 
-function formImages(mode) { return mode === 'add' ? adminForm.addImages : (adminForm.edit ? adminForm.edit.images : []); }
+// mode: 'add' | 'edit'    kind: 'img' | 'spin'
+function formList(mode, kind) {
+  if (mode === 'add') return adminForm.add[kind];
+  return adminForm.edit ? adminForm.edit[kind] : [];
+}
+const isSavedUrl = (mode, kind, url) => mode === 'edit' && !!adminForm.edit && adminForm.edit.orig[kind].includes(url);
 
-function renderImgStrip(mode) {
-  const el = $(mode === 'add' ? 'aImgStrip' : 'eImgStrip');
-  if (!el) return;
-  el.innerHTML = formImages(mode).map((u, i) =>
-    `<div class="img-thumb${i === 0 ? ' cover' : ''}"><img src="${esc(u)}" alt=""/>` +
-    `<button type="button" class="img-x" onclick="removeFormImage('${mode}',${i})" aria-label="Remove photo">&#10005;</button>` +
-    `<button type="button" class="img-star" onclick="makeCover('${mode}',${i})">${i === 0 ? 'Cover' : '&#9733; Cover'}</button></div>`).join('');
+function renderStrips(mode) {
+  const pfx = mode === 'add' ? 'a' : 'e';
+  const imgEl = $(pfx + 'ImgStrip'), spinEl = $(pfx + 'SpinStrip');
+  if (imgEl) {
+    imgEl.innerHTML = formList(mode, 'img').map((u, i) =>
+      `<div class="img-thumb${i === 0 ? ' cover' : ''}"><img src="${esc(u)}" alt=""/>` +
+      `<button type="button" class="img-x" onclick="removeFormImage('${mode}','img',${i})" aria-label="Remove photo">&#10005;</button>` +
+      `<button type="button" class="img-star" onclick="makeCover('${mode}',${i})">${i === 0 ? 'Cover' : '&#9733; Cover'}</button></div>`).join('');
+  }
+  if (spinEl) {
+    const frames = formList(mode, 'spin');
+    spinEl.innerHTML = frames.map((u, i) =>
+      `<div class="img-thumb spin-thumb"><img src="${esc(u)}" alt=""/><span class="spin-n">${i + 1}</span>` +
+      `<button type="button" class="img-x" onclick="removeFormImage('${mode}','spin',${i})" aria-label="Remove frame">&#10005;</button></div>`).join('');
+    const count = $(pfx + 'SpinCount');
+    if (count) {
+      count.textContent = frames.length
+        ? `${frames.length} frame${frames.length !== 1 ? 's' : ''}${frames.length < MIN_SPIN_FRAMES ? ` \u2014 need at least ${MIN_SPIN_FRAMES}` : ''}`
+        : 'No frames yet';
+    }
+  }
 }
 function makeCover(mode, i) {
-  const a = formImages(mode);
+  const a = formList(mode, 'img');
   if (i === 0 || !a[i]) return;
   a.unshift(a.splice(i, 1)[0]);
-  renderImgStrip(mode);
+  renderStrips(mode);
 }
-function removeFormImage(mode, i) {
-  const a = formImages(mode);
+function removeFormImage(mode, kind, i) {
+  const a = formList(mode, kind);
   const url = a.splice(i, 1)[0];
   if (!url) return;
   // Never-saved photos can go from storage right now. Saved photos are removed when you press Save.
-  if (mode === 'add' || !adminForm.edit.original.includes(url)) deleteStoredImages([url]);
-  renderImgStrip(mode);
+  if (!isSavedUrl(mode, kind, url)) deleteStoredImages([url]);
+  renderStrips(mode);
+}
+function reverseSpin(mode) { formList(mode, 'spin').reverse(); renderStrips(mode); }
+function clearSpin(mode) {
+  const a = formList(mode, 'spin');
+  if (!a.length) return;
+  const fresh = a.filter((u) => !isSavedUrl(mode, 'spin', u));
+  if (fresh.length) deleteStoredImages(fresh);
+  a.length = 0;
+  renderStrips(mode);
+}
+function previewSpin(mode) {
+  const a = formList(mode, 'spin');
+  if (a.length < 2) { showToast('Add some 360\u00B0 frames first'); return; }
+  openSpinViewer(a.slice(), { title: '360\u00B0 preview' });
 }
 
-// <input type="file" multiple accept="image/*" onchange="handlePhotoPick(this,'add')">
-async function handlePhotoPick(input, mode) {
-  const files = Array.from(input.files || []);
+// <input type="file" multiple accept="image/*" onchange="handlePhotoPick(this,'add')">   normal photos
+// <input type="file" multiple accept="image/*" onchange="handleSpinPick(this,'add')">    360° frames
+function handlePhotoPick(input, mode) { return pickAndUpload(input, mode, 'img'); }
+function handleSpinPick(input, mode) { return pickAndUpload(input, mode, 'spin'); }
+
+async function pickAndUpload(input, mode, kind) {
+  let files = Array.from(input.files || []);
   input.value = '';                                         // lets you pick the same photo again later
   if (!files.length || !requireAdmin()) return;
   if (mode === 'edit' && !adminForm.edit) return;
+  // 360° frames: camera files are named in shooting order (IMG_2541, IMG_2542 …) so sort by name.
+  // Ties keep the order you picked them in. If it spins the wrong way, tap "Reverse".
+  if (kind === 'spin') files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
 
-  const target = formImages(mode);                          // the exact list these uploads belong to
+  const target = formList(mode, kind);                      // the exact list these uploads belong to
   const label = document.querySelector(`label[for="${input.id}"]`);
   const idleHtml = label ? label.innerHTML : '';
   if (label) label.classList.add('busy');
@@ -227,12 +298,12 @@ async function handlePhotoPick(input, mode) {
   for (let i = 0; i < files.length; i++) {
     if (label) label.textContent = `Uploading ${i + 1} of ${files.length}\u2026`;
     try {
-      const url = await uploadProductImage(files[i]);
-      const stillOpen = mode === 'add' || (adminForm.edit && adminForm.edit.images === target);
+      const url = await uploadProductImage(files[i], kind);
+      const stillOpen = mode === 'add' || (adminForm.edit && adminForm.edit[kind] === target);
       if (!stillOpen) { deleteStoredImages([url]); break; } // edit window was closed mid-upload
       target.push(url);
       ok++;
-      renderImgStrip(mode);
+      renderStrips(mode);
     } catch (err) {
       console.error('Upload failed:', err);
       lastErr = dbMsg(err);
@@ -241,7 +312,8 @@ async function handlePhotoPick(input, mode) {
 
   adminForm.uploading--;
   if (label) { label.classList.remove('busy'); label.innerHTML = idleHtml; }
-  if (ok === files.length) showToast(ok === 1 ? 'Photo uploaded \u2705' : `${ok} photos uploaded \u2705`);
+  const noun = kind === 'spin' ? 'frame' : 'photo';
+  if (ok === files.length) showToast(ok === 1 ? `1 ${noun} uploaded \u2705` : `${ok} ${noun}s uploaded \u2705`);
   else showToast(`${ok}/${files.length} uploaded. ${lastErr}`);
 }
 
@@ -256,8 +328,9 @@ function renderAdminProducts() {
     "<div class='admin-prod-row'>" +
     `<div class='admin-prod-thumb'>${p.img ? `<img src="${esc(p.img)}" alt=""/>` : esc(p.emoji)}</div>` +
     `<div class='admin-prod-info'><div class='admin-prod-name'>${esc(p.name)}${p.soldOut ? " <span style='color:var(--red);font-size:.72rem'>[SOLD OUT]</span>" : ''}</div>` +
-    `<div class='admin-prod-meta'>${naira(p.price)} &bull; ${esc(catMap[p.cat] || p.cat)} &bull; Stock: ${p.stock}` +
-    `${p.badge ? ` &bull; <span class='admin-badge-tag'>${esc(p.badge.toUpperCase())}</span>` : ''}</div></div>` +
+    `<div class='admin-prod-meta'>${naira(p.price)}${hasSizePricing(p) ? '+' : ''} &bull; ${esc(catMap[p.cat] || p.cat)} &bull; Stock: ${p.stock}` +
+    `${p.badge ? ` &bull; <span class='admin-badge-tag'>${esc(p.badge.toUpperCase())}</span>` : ''}` +
+    `${p.spinEnabled ? " &bull; <span class='admin-badge-tag'>360&deg;</span>" : ''}</div></div>` +
     "<div style='display:flex;gap:.4rem;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end'>" +
     `<button class='admin-edit-btn' onclick='openEditModal(${p.id})'>&#9998; Edit</button>` +
     `<button class='admin-edit-btn' style='background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.25);color:var(--red)' onclick='toggleSoldOut(${p.id})'>${p.soldOut ? '\u2705 In Stock' : '\uD83D\uDEAB Sold Out'}</button>` +
@@ -267,23 +340,29 @@ function renderAdminProducts() {
 
 // Reads + validates the add form (prefix 'a') or edit form (prefix 'e').
 function readProductForm(pfx) {
+  const mode = pfx === 'a' ? 'add' : 'edit';
   const v = (id) => $(pfx + id).value.trim();
   const price = parseInt($(pfx + 'Price').value, 10);
   const oldRaw = v('OldPrice'), stockRaw = v('Stock');
-  const sizes = v('Sizes').split(',').map((s) => s.trim()).filter(Boolean);
   const stock = stockRaw === '' ? 1 : parseInt(stockRaw, 10);
+  const sz = parseSizes(v('Sizes'));
+  const spinOn = !!$(pfx + 'SpinOn').checked;
   if (!v('Name')) return { error: 'Please enter a product name' };
   if (!Number.isInteger(price) || price <= 0) return { error: 'Please enter a valid price' };
   if (oldRaw && !(parseInt(oldRaw, 10) > 0)) return { error: 'Old price must be a number' };
   if (!Number.isInteger(stock) || stock < 0) return { error: 'Stock must be 0 or more' };
-  if (!sizes.length) return { error: 'Please enter at least one size' };
+  if (sz.error) return { error: sz.error };
+  if (spinOn && formList(mode, 'spin').length < MIN_SPIN_FRAMES) {
+    return { error: `360\u00B0 view needs at least ${MIN_SPIN_FRAMES} frames (12\u201324 is best)` };
+  }
   return {
     row: {
       title: v('Name').slice(0, 150), category: $(pfx + 'Cat').value, price,
       old_price: oldRaw ? parseInt(oldRaw, 10) : null, stock,
-      badge: $(pfx + 'Badge').value || null, sizes,
+      badge: $(pfx + 'Badge').value || null, sizes: sz.sizes, size_surcharges: sz.add,
       color: v('Color'), material: v('Material'),
-      emoji: v('Emoji') || '\uD83D\uDC55', description: v('Desc')
+      emoji: v('Emoji') || '\uD83D\uDC55', description: v('Desc'),
+      spin_enabled: spinOn
     }
   };
 }
@@ -295,7 +374,7 @@ async function addAdminProduct(btn) {
   if (adminForm.uploading) { showToast('Wait for the photos to finish uploading'); return; }
   if (btn) btn.classList.add('btn-busy');
   const { data, error } = await sb.from('products')
-    .insert(Object.assign({}, f.row, { images: adminForm.addImages }))
+    .insert(Object.assign({}, f.row, { images: adminForm.add.img, spin_images: adminForm.add.spin }))
     .select().single();
   if (btn) btn.classList.remove('btn-busy');
   if (error) { showToast('Could not save: ' + dbMsg(error)); return; }
@@ -307,38 +386,43 @@ async function addAdminProduct(btn) {
 }
 
 function resetAddForm(deleteUploads) {
-  if (deleteUploads && adminForm.addImages.length) deleteStoredImages(adminForm.addImages);
-  adminForm.addImages = [];
+  if (deleteUploads) deleteStoredImages(adminForm.add.img.concat(adminForm.add.spin));
+  adminForm.add = { img: [], spin: [] };
   ['aName', 'aPrice', 'aOldPrice', 'aSizes', 'aColor', 'aMaterial', 'aEmoji', 'aDesc'].forEach((id) => { $(id).value = ''; });
   $('aStock').value = '1';
   $('aCat').value = 'clothing-male';
   $('aBadge').value = '';
-  renderImgStrip('add');
+  $('aSpinOn').checked = false;
+  renderStrips('add');
 }
 function clearAdminForm() { resetAddForm(true); }
 
 function openEditModal(id) {
   const p = products.find((x) => x.id === id);
   if (!p) return;
-  adminForm.edit = { id, original: p.images.slice(), images: p.images.slice() };
+  adminForm.edit = {
+    id, orig: { img: p.images.slice(), spin: p.spinImages.slice() },
+    img: p.images.slice(), spin: p.spinImages.slice()
+  };
   $('eName').value = p.name;
   $('eCat').value = p.cat;
   $('ePrice').value = p.price;
   $('eOldPrice').value = p.oldPrice || '';
   $('eStock').value = p.stock;
   $('eBadge').value = p.badge || '';
-  $('eSizes').value = p.sizes.join(', ');
+  $('eSizes').value = formatSizes(p);
   $('eColor').value = p.color;
   $('eMaterial').value = p.material;
   $('eEmoji').value = p.emoji;
   $('eDesc').value = p.description;
-  renderImgStrip('edit');
+  $('eSpinOn').checked = p.spinEnabled;
+  renderStrips('edit');
   $('editModalOverlay').classList.add('open');
 }
 function closeEditModal(saved) {
   const ed = adminForm.edit;
   if (ed && !saved) {                                       // cancelled: drop photos uploaded during this edit
-    const fresh = ed.images.filter((u) => !ed.original.includes(u));
+    const fresh = ed.img.filter((u) => !ed.orig.img.includes(u)).concat(ed.spin.filter((u) => !ed.orig.spin.includes(u)));
     if (fresh.length) deleteStoredImages(fresh);
   }
   adminForm.edit = null;
@@ -353,11 +437,11 @@ async function saveEditProduct(btn) {
   if (adminForm.uploading) { showToast('Wait for the photos to finish uploading'); return; }
   if (btn) btn.classList.add('btn-busy');
   const { data, error } = await sb.from('products')
-    .update(Object.assign({}, f.row, { images: ed.images }))
+    .update(Object.assign({}, f.row, { images: ed.img, spin_images: ed.spin }))
     .eq('id', ed.id).select().single();
   if (btn) btn.classList.remove('btn-busy');
   if (error) { showToast('Could not save: ' + dbMsg(error)); return; }
-  const removed = ed.original.filter((u) => !ed.images.includes(u));
+  const removed = ed.orig.img.filter((u) => !ed.img.includes(u)).concat(ed.orig.spin.filter((u) => !ed.spin.includes(u)));
   const idx = products.findIndex((x) => x.id === ed.id);
   if (idx > -1) products[idx] = rowToProduct(data);
   closeEditModal(true);
@@ -387,7 +471,7 @@ async function deleteProduct(id) {
   const { data, error } = await sb.from('products').delete().eq('id', id).select('id');
   if (error || !data || !data.length) { showToast('Could not delete: ' + (error ? dbMsg(error) : 'not allowed')); return; }
   products = products.filter((x) => x.id !== id);
-  deleteStoredImages(p.images);
+  deleteStoredImages(p.images.concat(p.spinImages));
   renderAdminProducts();
   applyView();
   showToast('Product deleted');

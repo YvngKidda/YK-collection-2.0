@@ -7,6 +7,7 @@
 
 /* ── CONSTANTS & HELPERS ── */
 const WA_NUMBER = '2349014223167';
+const LOW_STOCK = 3;            // show "Only N left" when stock is 1..LOW_STOCK
 const catMap = {
   'clothing-male': 'Male Clothing', 'clothing-female': 'Female Clothing',
   'shoes-male': 'Male Shoes', 'shoes-female': 'Female Shoes',
@@ -35,6 +36,13 @@ const naira = (n) => '\u20A6' + Number(n || 0).toLocaleString();
 const isUrl = (s) => typeof s === 'string' && /^https?:\/\//i.test(s);
 const fmtDate = (iso) => new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
 const starsText = (n) => '\u2605'.repeat(n) + '\u2606'.repeat(5 - n);
+const sizeKey = (s) => String(s || '').trim().toUpperCase();
+// Per-size pricing: base price + the extra amount set for that size (size_surcharges in the database)
+const sizeExtra = (p, size) => (size && p.sizeAdd[size]) || 0;
+const priceFor = (p, size) => p.price + sizeExtra(p, size);
+const oldPriceFor = (p, size) => (p.oldPrice ? p.oldPrice + sizeExtra(p, size) : null);
+const hasSizePricing = (p) => Object.keys(p.sizeAdd).length > 0;
+const isLowStock = (p) => p.stock > 0 && p.stock <= LOW_STOCK;
 
 let toastTimer = null;
 function showToast(msg) {
@@ -54,6 +62,9 @@ let comingSoonCats = { 'jewelry-female': true };
 let comingSoonSpecial = { newArrivals: false, sale: false };
 let activeFilterCat = 'all';
 let activeFilterSpecial = 'all';
+// Sort + filter choices made in the shop toolbar
+const viewState = { sort: 'newest', min: null, max: null, sizes: new Set(), inStock: false, minRating: 0 };
+let deepLinkDone = false;
 const STORAGE_CART = 'yk_cart_v1';
 
 /* ════════════════════════════════════════════════════════════════
@@ -62,12 +73,19 @@ const STORAGE_CART = 'yk_cart_v1';
 // Convert a database row into the shape the UI uses.
 function rowToProduct(r) {
   const imgs = Array.isArray(r.images) ? r.images.filter(Boolean) : [];
+  const spin = Array.isArray(r.spin_images) ? r.spin_images.filter(Boolean) : [];
+  const add = {};
+  if (r.size_surcharges && typeof r.size_surcharges === 'object') {
+    Object.keys(r.size_surcharges).forEach((k) => { const n = Number(r.size_surcharges[k]); if (n > 0) add[k] = n; });
+  }
   return {
     id: r.id, name: r.title, description: r.description || '',
     price: r.price, oldPrice: r.old_price, stock: r.stock, soldOut: r.stock <= 0,
-    cat: r.category, badge: r.badge, sizes: r.sizes || [],
+    cat: r.category, badge: r.badge, sizes: r.sizes || [], sizeAdd: add,
     color: r.color || '', material: r.material || '', emoji: r.emoji || '\uD83D\uDC55',
-    images: imgs, img: imgs[0] || null, createdAt: r.created_at
+    images: imgs, img: imgs[0] || spin[0] || null,
+    spinImages: spin, spinEnabled: !!r.spin_enabled && spin.length >= 4,   // 360° needs at least 4 frames
+    createdAt: r.created_at
   };
 }
 
@@ -97,6 +115,7 @@ async function loadStore() {
     syncCartWithProducts();
     applyView();
     document.dispatchEvent(new CustomEvent('store:loaded'));
+    handleDeepLink();
   } catch (e) {
     console.error('Could not load store:', e);
     grid.innerHTML = '<div class="grid-msg">Couldn\u2019t load products. Check your connection.<br><button onclick="loadStore()">Try again</button></div>';
@@ -130,6 +149,7 @@ function go(name) {
   const cur = document.querySelector('.page.active');
   const next = $(name);
   if (!next || next === cur) return;
+  if (name !== 'product-detail') clearProductUrl();
   const show = () => {
     next.classList.add('active');
     window.scrollTo(0, 0);
@@ -171,7 +191,9 @@ window.addEventListener('scroll', () => {
 function renderProds(list) {
   const g = $('prodGrid');
   if (!list.length) {
-    g.innerHTML = `<div class="grid-msg">${products.length ? 'No products found.' : 'No products yet \u2014 check back soon!'}</div>`;
+    g.innerHTML = products.length
+      ? '<div class="grid-msg">No products match your choices.<br><button onclick="clearEverything()">Clear all filters</button></div>'
+      : '<div class="grid-msg">No products yet \u2014 check back soon!</div>';
     return;
   }
   g.innerHTML = list.map((p, i) => {
@@ -182,19 +204,22 @@ function renderProds(list) {
       (p.soldOut ? '<div class="prod-sold-overlay"><div class="prod-sold-stamp">Sold Out</div></div>' : '') +
       '<div class="prod-thumb-overlay"></div>' +
       (p.badge && !p.soldOut ? `<div class="prod-badge ${esc(p.badge)}">${esc(p.badge.toUpperCase())}</div>` : '') +
+      (p.spinEnabled ? '<div class="spin-tag">&#8635; 360&deg;</div>' : '') +
       '</div><div class="prod-info">' +
       `<div class="prod-cat">${esc(catMap[p.cat] || p.cat)}</div>` +
       `<div class="prod-name">${esc(p.name)}</div>` +
       `<div class="prod-rating">${r && r.count
         ? `\u2605${r.avg.toFixed(1)} (${r.count} review${r.count !== 1 ? 's' : ''})`
         : '<span style="color:var(--text3);font-size:.75rem">No reviews yet</span>'}</div>` +
-      `<div><span class="prod-price">${naira(p.price)}</span>${p.oldPrice ? `<span class="prod-price-old">${naira(p.oldPrice)}</span>` : ''}</div>` +
+      (isLowStock(p) ? `<div class="low-stock">\uD83D\uDD25 Only ${p.stock} left</div>` : '') +
+      `<div><span class="prod-price">${hasSizePricing(p) ? '<small class="from">From </small>' : ''}${naira(p.price)}</span>` +
+      `${p.oldPrice ? `<span class="prod-price-old">${naira(p.oldPrice)}</span>` : ''}</div>` +
       `<button class="view-btn">${p.soldOut ? 'Sold Out' : 'View Product \u2192'}</button></div></div>`;
   }).join('');
 }
 
-// What should the grid show right now? (search beats filters; filters come from the state vars)
-function currentList() {
+/* ── what the grid shows: category/special/search → toolbar filters → sort ── */
+function baseList() {
   const q = ($('searchBox').value || '').trim().toLowerCase();
   if (q) {
     return products.filter((p) => [p.name, catMap[p.cat], p.color, p.material]
@@ -205,16 +230,112 @@ function currentList() {
   if (activeFilterCat !== 'all') return products.filter((p) => p.cat === activeFilterCat);
   return products;
 }
+const ratingOf = (p) => (ratings[p.id] ? ratings[p.id].avg : 0);
+const reviewsOf = (p) => (ratings[p.id] ? ratings[p.id].count : 0);
+const SORTERS = {
+  newest: (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+  'price-asc': (a, b) => a.price - b.price,
+  'price-desc': (a, b) => b.price - a.price,
+  rating: (a, b) => (ratingOf(b) - ratingOf(a)) || (reviewsOf(b) - reviewsOf(a)),
+  name: (a, b) => a.name.localeCompare(b.name)
+};
+function currentList() {
+  const v = viewState;
+  const list = baseList().filter((p) => {
+    if (v.min != null && p.price < v.min) return false;
+    if (v.max != null && p.price > v.max) return false;
+    if (v.inStock && p.soldOut) return false;
+    if (v.sizes.size && !p.sizes.some((s) => v.sizes.has(sizeKey(s)))) return false;
+    if (v.minRating && ratingOf(p) < v.minRating) return false;
+    return true;
+  });
+  return list.slice().sort(SORTERS[v.sort] || SORTERS.newest);
+}
 
 function applyView() {
   const list = currentList();
   renderProds(list);
   buildShopFilterBar();
+  buildSizeChips();
+  updateToolbar(list.length);
   let label = null;
   if (activeFilterSpecial === 'new') label = 'New Arrivals';
   else if (activeFilterSpecial === 'sale') label = 'Sale / Deals';
   else if (activeFilterCat !== 'all' && activeFilterSpecial.indexOf('unisex-') !== 0) label = catMap[activeFilterCat] || activeFilterCat;
-  if (label) updateActiveFilterStrip(label, list.length); else clearActiveFilterStrip();
+  if (label) updateActiveFilterStrip(label); else clearActiveFilterStrip();
+}
+
+/* ── sort / filter toolbar ── */
+const SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '2XL', '3XL', '4XL'];
+function buildSizeChips() {
+  const box = $('sizeChips');
+  if (!box) return;
+  const all = new Set();
+  products.forEach((p) => p.sizes.forEach((s) => { const k = sizeKey(s); if (k) all.add(k); }));
+  Array.from(viewState.sizes).forEach((k) => { if (!all.has(k)) viewState.sizes.delete(k); });
+  const rank = (k) => {
+    const i = SIZE_ORDER.indexOf(k);
+    if (i > -1) return [0, i];
+    return /^\d+(\.\d+)?$/.test(k) ? [1, Number(k)] : [2, 0];
+  };
+  const keys = Array.from(all).sort((a, b) => {
+    const ra = rank(a), rb = rank(b);
+    return (ra[0] - rb[0]) || (ra[1] - rb[1]) || a.localeCompare(b);
+  });
+  box.innerHTML = keys.length
+    ? keys.map((k) => `<button type="button" class="size-chip${viewState.sizes.has(k) ? ' on' : ''}" data-size="${esc(k)}">${esc(k)}</button>`).join('')
+    : '<span class="fp-empty">No sizes yet</span>';
+}
+function activeFilterCount() {
+  const v = viewState;
+  return (v.min != null || v.max != null ? 1 : 0) + (v.sizes.size ? 1 : 0) + (v.inStock ? 1 : 0) + (v.minRating ? 1 : 0);
+}
+function updateToolbar(count) {
+  const c = $('toolbarCount');
+  if (c) c.textContent = `${count} item${count !== 1 ? 's' : ''}`;
+  const n = activeFilterCount();
+  const b = $('filterBadge');
+  if (b) { b.textContent = n || ''; b.style.display = n ? 'inline-flex' : 'none'; }
+  const r = $('filterReset');
+  if (r) r.style.display = n ? 'inline-block' : 'none';
+}
+function toggleFilterPanel() {
+  const open = $('filterPanel').classList.toggle('open');
+  $('filterToggle').setAttribute('aria-expanded', String(open));
+}
+function onSortChange() { viewState.sort = $('sortSelect').value; applyView(); }
+let filterTimer = null;
+function onFilterChange() {
+  clearTimeout(filterTimer);
+  filterTimer = setTimeout(() => {
+    const num = (id) => {
+      const raw = $(id).value.trim(), n = Number(raw);
+      return raw === '' || !isFinite(n) ? null : Math.max(0, n);
+    };
+    viewState.min = num('fMin');
+    viewState.max = num('fMax');
+    viewState.inStock = $('fStock').checked;
+    viewState.minRating = Number($('fRating').value) || 0;
+    applyView();
+  }, 180);
+}
+function toggleSizeChip(key) {
+  if (viewState.sizes.has(key)) viewState.sizes.delete(key); else viewState.sizes.add(key);
+  applyView();
+}
+function resetViewState() {
+  const v = viewState;
+  v.min = null; v.max = null; v.inStock = false; v.minRating = 0; v.sizes.clear();
+  ['fMin', 'fMax'].forEach((id) => { const e = $(id); if (e) e.value = ''; });
+  const st = $('fStock'); if (st) st.checked = false;
+  const rt = $('fRating'); if (rt) rt.value = '0';
+}
+function resetFilters() { resetViewState(); applyView(); }
+function clearEverything() {
+  activeFilterCat = 'all'; activeFilterSpecial = 'all';
+  $('searchBox').value = ''; $('searchClear').style.display = 'none';
+  resetViewState();
+  applyView();
 }
 
 function buildShopFilterBar() {
@@ -255,12 +376,11 @@ function filterSpecial(type) {
 }
 function filterGo(cat) { go('shop'); setTimeout(() => filterByCat(cat), 350); }
 
-function updateActiveFilterStrip(label, count) {
+function updateActiveFilterStrip(label) {
   const strip = $('activeFilterStrip');
   if (!strip) return;
   strip.classList.add('show');
-  strip.innerHTML = `<div class="active-filter-chip">${esc(label)}<button onclick="clearActiveFilter()">&#10005;</button></div>` +
-    `<span class="filter-result-count">${count} item${count !== 1 ? 's' : ''}</span>`;
+  strip.innerHTML = `<div class="active-filter-chip">${esc(label)}<button onclick="clearActiveFilter()">&#10005;</button></div>`;
 }
 function clearActiveFilterStrip() {
   const strip = $('activeFilterStrip');
@@ -290,7 +410,8 @@ function openProd(id) {
   buildGallery(p);
   $('detBadge').textContent = p.badge ? p.badge.toUpperCase() : (catMap[p.cat] || p.cat);
   $('detName').textContent = p.name;
-  $('detPrice').innerHTML = naira(p.price) + (p.oldPrice ? `<span class="det-price-old">${naira(p.oldPrice)}</span>` : '');
+  renderDetailPrice(false);
+  renderStockPill();
   $('sizesWrap').innerHTML = p.sizes.map((s) =>
     `<button class="sz-btn" data-size="${esc(s)}" onclick="pickSize(this)">${esc(s)}</button>`).join('');
   $('detDesc').innerHTML = esc(p.description || 'A premium quality piece from YK Collection.').replace(/\n/g, '<br>');
@@ -303,6 +424,7 @@ function openProd(id) {
   $('reviewsSummary').style.display = 'none';
   $('reviewsList').innerHTML = '<div class="no-reviews">Loading reviews\u2026</div>';
   loadReviews(p.id);
+  setProductUrl(p.id);
   go('product-detail');
 }
 
@@ -310,6 +432,52 @@ function pickSize(btn) {
   document.querySelectorAll('.sz-btn').forEach((b) => b.classList.remove('sel'));
   btn.classList.add('sel');
   selSize = btn.dataset.size;
+  renderDetailPrice(true);                       // price follows the size the shopper taps
+}
+// Shows the price for the chosen size (or the base price + a note until a size is chosen)
+function renderDetailPrice(animate) {
+  const p = curProd;
+  if (!p) return;
+  const price = priceFor(p, selSize), old = oldPriceFor(p, selSize);
+  const el = $('detPrice');
+  el.innerHTML = naira(price) + (old ? `<span class="det-price-old">${naira(old)}</span>` : '') +
+    (!selSize && hasSizePricing(p) ? '<span class="price-note">Price varies by size</span>' : '');
+  if (animate) { el.classList.remove('price-pop'); void el.offsetWidth; el.classList.add('price-pop'); }
+}
+function renderStockPill() {
+  const el = $('detStock');
+  if (!el || !curProd) return;
+  if (isLowStock(curProd)) { el.textContent = `\uD83D\uDD25 Only ${curProd.stock} left \u2014 order soon`; el.style.display = 'inline-flex'; }
+  else el.style.display = 'none';
+}
+
+/* ── share link + deep link (?p=ID opens that product directly) ── */
+function productUrl(id) { return location.origin + location.pathname + '?p=' + id; }
+function setProductUrl(id) { try { history.replaceState(null, '', '?p=' + id); } catch (e) { /* ignore */ } }
+function clearProductUrl() {
+  try { if (/[?&]p=/.test(location.search)) history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
+}
+function handleDeepLink() {
+  if (deepLinkDone) return;
+  deepLinkDone = true;
+  const id = Number(new URLSearchParams(location.search).get('p'));
+  if (!id) return;
+  const p = products.find((x) => x.id === id);
+  if (!p || p.soldOut) {
+    showToast(p ? 'This product is sold out' : 'That product is no longer available');
+    go('shop'); clearProductUrl();
+    return;
+  }
+  openProd(id);
+}
+async function shareProduct() {
+  if (!curProd) return;
+  const url = productUrl(curProd.id);
+  const data = { title: curProd.name + ' | YK Collection', text: `${curProd.name} \u2014 ${naira(curProd.price)} on YK Collection`, url };
+  try { if (navigator.share) { await navigator.share(data); return; } }
+  catch (e) { if (e && e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(url); showToast('Link copied!'); }
+  catch (e) { window.prompt('Copy this link:', url); }
 }
 
 /* ── REVIEWS ── */
@@ -390,7 +558,7 @@ function syncCartWithProducts() {
   cart.forEach((it) => {
     const p = products.find((x) => x.id === it.id);
     if (!p || p.soldOut || !p.sizes.includes(it.size)) return;
-    next.push(Object.assign({}, it, { name: p.name, price: p.price, img: p.img, emoji: p.emoji, cat: p.cat }));
+    next.push(Object.assign({}, it, { name: p.name, price: priceFor(p, it.size), img: p.img, emoji: p.emoji, cat: p.cat }));
   });
   if (next.length !== cart.length) showToast('Some items in your cart are no longer available');
   cart = next; saveCart(); updateCart();
@@ -403,7 +571,7 @@ function addFromDetail() {
   if (ex) {
     if (ex.qty >= p.stock) { showToast(`Only ${p.stock} in stock`); return; }
     ex.qty++;
-  } else cart.push({ id: p.id, name: p.name, cat: p.cat, emoji: p.emoji, img: p.img, price: p.price, key, size: selSize, qty: 1 });
+  } else cart.push({ id: p.id, name: p.name, cat: p.cat, emoji: p.emoji, img: p.img, price: priceFor(p, selSize), key, size: selSize, qty: 1 });
   saveCart(); updateCart(); bumpCount();
   showToast(`${p.name} (${selSize}) added to cart!`);
   setTimeout(toggleCart, 400);
@@ -411,7 +579,7 @@ function addFromDetail() {
 function buyNow() {
   if (!selSize) { showToast('Please select a size first'); return; }
   const p = curProd;
-  const msg = `QUICK ORDER - YK COLLECTION\n\n${p.name} (Size: ${selSize})\nPrice: NGN${p.price.toLocaleString()}\n\nNationwide Delivery\n\nPlease confirm my order. Thank you!`;
+  const msg = `QUICK ORDER - YK COLLECTION\n\n${p.name} (Size: ${selSize})\nPrice: NGN${priceFor(p, selSize).toLocaleString()}\n\nNationwide Delivery\n\nPlease confirm my order. Thank you!`;
   window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 function updateCart() {
@@ -507,7 +675,7 @@ let lightboxZoom = 1, lightboxOffset = { x: 0, y: 0 }, lightboxDragStart = { x: 
 let galleryTouchStartX = 0, galleryTouchStartY = 0;
 
 function buildGallery(p) {
-  galleryImages = p.images.length ? p.images.slice() : [p.emoji];
+  galleryImages = p.images.length ? p.images.slice() : (p.spinImages.length ? [p.spinImages[0]] : [p.emoji]);
   galleryIndex = 0;
   const wrap = $('detGallery');
   if (!wrap) return;
@@ -521,8 +689,10 @@ function buildGallery(p) {
   const dots = (many && galleryImages.length <= 8)
     ? "<div class='gallery-dots'>" + galleryImages.map((_, i) =>
         `<button class='gallery-dot${i === 0 ? ' active' : ''}' onclick='galleryGoTo(${i})'></button>`).join('') + '</div>' : '';
-  wrap.innerHTML = `<div class='det-gallery-main' onclick='openLightbox(galleryIndex)' id='galleryMain'>` +
-    `<div class='det-gallery-slides' id='gallerySlides'>${slides}</div>${arrows}${count}</div>${dots}`;
+  const spinPill = p.spinEnabled
+    ? "<button class='spin-pill' onclick='event.stopPropagation();onGalleryClick()'>&#8635; 360&deg; view</button>" : '';
+  wrap.innerHTML = `<div class='det-gallery-main' onclick='onGalleryClick()' id='galleryMain'>` +
+    `<div class='det-gallery-slides' id='gallerySlides'>${slides}</div>${arrows}${count}${spinPill}</div>${dots}`;
 
   const main = $('galleryMain');
   main.addEventListener('touchstart', (e) => {
@@ -627,6 +797,151 @@ document.addEventListener('keydown', (e) => {
 });
 
 /* ════════════════════════════════════════════════════════════════
+   360° VIEWER — drag (mouse) or swipe (finger) to turn a product through a ring of photos
+   ════════════════════════════════════════════════════════════════ */
+function createSpin(stage, frames) {
+  const N = frames.length;
+  const canvas = document.createElement('canvas');
+  canvas.className = 'spin-canvas';
+  const loader = document.createElement('div');
+  loader.className = 'spin-loading';
+  loader.textContent = 'Loading 360\u00B0 view\u2026 0%';
+  const hint = document.createElement('div');
+  hint.className = 'spin-hint';
+  hint.innerHTML = '&#8596; Drag to rotate';
+  stage.innerHTML = '';
+  stage.appendChild(canvas); stage.appendChild(loader); stage.appendChild(hint);
+  const ctx = canvas.getContext('2d');
+  const imgs = new Array(N);
+  let loaded = 0, ready = false, dead = false;
+  let pos = 0, vel = 0, dragging = false, lastX = 0, raf = 0;
+  let auto = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  let autoLast = 0, autoSpun = 0;
+  const idx = () => ((Math.round(pos) % N) + N) % N;
+
+  function draw() {
+    let j = idx();
+    for (let k = 0; k < N && !(imgs[j] && imgs[j].naturalWidth); k++) j = (j + 1) % N;   // skip frames that failed to load
+    const im = imgs[j];
+    const cw = canvas.width, ch = canvas.height;
+    if (!im || !im.naturalWidth || !cw || !ch) return;
+    ctx.clearRect(0, 0, cw, ch);
+    const sc = Math.min(cw / im.naturalWidth, ch / im.naturalHeight);
+    const w = im.naturalWidth * sc, h = im.naturalHeight * sc;
+    ctx.drawImage(im, (cw - w) / 2, (ch - h) / 2, w, h);
+  }
+  function resize() {
+    const r = stage.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.max(1, Math.round(r.width * dpr));
+    canvas.height = Math.max(1, Math.round(r.height * dpr));
+    draw();
+  }
+  const ro = window.ResizeObserver ? new ResizeObserver(resize) : null;
+  if (ro) ro.observe(stage); else window.addEventListener('resize', resize);
+  resize();
+
+  function autoTick(ts) {                         // one gentle turn to show it's 3D, then stop
+    if (dead || !auto || dragging) return;
+    if (!autoLast) autoLast = ts;
+    const adv = N * (ts - autoLast) / 7000;
+    autoLast = ts; pos += adv; autoSpun += adv;
+    draw();
+    if (autoSpun >= N) { auto = false; return; }
+    raf = requestAnimationFrame(autoTick);
+  }
+  frames.forEach((src, i) => {
+    const im = new Image();
+    im.onload = im.onerror = () => {
+      if (dead) return;
+      loaded++;
+      if (im.naturalWidth) imgs[i] = im;
+      loader.textContent = `Loading 360\u00B0 view\u2026 ${Math.round(loaded / N * 100)}%`;
+      if (loaded === N) {
+        ready = true; loader.style.display = 'none'; hint.classList.add('show'); draw();
+        if (auto) raf = requestAnimationFrame(autoTick);
+      }
+    };
+    im.src = src;
+  });
+
+  const perFrame = () => Math.max(4, stage.clientWidth / N);   // dragging across the stage ≈ one full turn
+  function down(e) {
+    if (!ready || (typeof e.button === 'number' && e.button > 0)) return;
+    dragging = true; auto = false; vel = 0; lastX = e.clientX;
+    cancelAnimationFrame(raf);
+    try { stage.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    stage.classList.add('grabbing'); hint.classList.remove('show');
+  }
+  function move(e) {
+    if (!dragging) return;
+    const df = -(e.clientX - lastX) / perFrame();
+    lastX = e.clientX;
+    pos += df; vel = vel * 0.6 + df * 0.4;
+    draw();
+  }
+  function up() {
+    if (!dragging) return;
+    dragging = false; stage.classList.remove('grabbing');
+    const glide = () => {                         // keep turning briefly after the finger lifts
+      if (dead || dragging) return;
+      pos += vel; vel *= 0.93; draw();
+      if (Math.abs(vel) > 0.02) raf = requestAnimationFrame(glide);
+    };
+    raf = requestAnimationFrame(glide);
+  }
+  stage.addEventListener('pointerdown', down);
+  stage.addEventListener('pointermove', move);
+  stage.addEventListener('pointerup', up);
+  stage.addEventListener('pointercancel', up);
+
+  return {
+    step(n) { if (!ready) return; auto = false; cancelAnimationFrame(raf); hint.classList.remove('show'); pos = Math.round(pos) + n; draw(); },
+    destroy() {
+      dead = true; cancelAnimationFrame(raf);
+      if (ro) ro.disconnect(); else window.removeEventListener('resize', resize);
+      stage.removeEventListener('pointerdown', down); stage.removeEventListener('pointermove', move);
+      stage.removeEventListener('pointerup', up); stage.removeEventListener('pointercancel', up);
+      stage.innerHTML = '';
+    },
+    get frame() { return idx(); },
+    get ready() { return ready; }
+  };
+}
+
+let spinCtl = null;
+function openSpinViewer(frames, opts) {
+  opts = opts || {};
+  if (!frames || frames.length < 2) { showToast('No 360\u00B0 photos yet'); return; }
+  if (spinCtl) spinCtl.destroy();
+  $('spinTitle').textContent = opts.title || '';
+  $('spinPhotosBtn').style.display = opts.photos ? 'inline-flex' : 'none';
+  $('spinOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  spinCtl = createSpin($('spinStage'), frames);
+}
+function closeSpinViewer() {
+  if (spinCtl) { spinCtl.destroy(); spinCtl = null; }
+  $('spinOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function spinStep(n) { if (spinCtl) spinCtl.step(n); }
+function spinToPhotos() { closeSpinViewer(); openLightbox(0); }
+// Tapping the product image: 360° products open the spinner, the rest open the normal zoom viewer
+function onGalleryClick() {
+  if (curProd && curProd.spinEnabled) {
+    openSpinViewer(curProd.spinImages, { title: curProd.name, photos: curProd.images.length > 0 });
+  } else openLightbox(galleryIndex);
+}
+document.addEventListener('keydown', (e) => {
+  const o = $('spinOverlay');
+  if (!o || !o.classList.contains('open')) return;
+  if (e.key === 'Escape') closeSpinViewer();
+  if (e.key === 'ArrowLeft') spinStep(-1);
+  if (e.key === 'ArrowRight') spinStep(1);
+});
+
+/* ════════════════════════════════════════════════════════════════
    THEME (light / dark)
    ════════════════════════════════════════════════════════════════ */
 let currentTheme = 'light';
@@ -725,6 +1040,10 @@ document.addEventListener('DOMContentLoaded', () => {
   $('shopFilterBar').addEventListener('click', (e) => {
     const b = e.target.closest('[data-special]');
     if (b) filterSpecial(b.dataset.special);
+  });
+  $('sizeChips').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-size]');
+    if (b) toggleSizeChip(b.dataset.size);
   });
   loadCart();
   buildShopFilterBar();

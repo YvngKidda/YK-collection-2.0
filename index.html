@@ -105,6 +105,31 @@
   </div>
   <div class="shop-body">
     <div class="shop-filter-bar" id="shopFilterBar"></div>
+    <div class="shop-toolbar">
+      <button class="tb-btn" id="filterToggle" onclick="toggleFilterPanel()" aria-expanded="false">&#9881; Filters <span class="tb-badge" id="filterBadge" style="display:none"></span></button>
+      <label class="tb-sort"><span>Sort</span>
+        <select id="sortSelect" onchange="onSortChange()">
+          <option value="newest">Newest</option>
+          <option value="price-asc">Price: Low to High</option>
+          <option value="price-desc">Price: High to Low</option>
+          <option value="rating">Top Rated</option>
+          <option value="name">Name: A to Z</option>
+        </select>
+      </label>
+      <span class="tb-count" id="toolbarCount"></span>
+    </div>
+    <div class="filter-panel" id="filterPanel">
+      <div class="fp-grid">
+        <div class="fp-grp"><div class="fp-lbl">Price (&#8358;)</div>
+          <div class="fp-price"><input type="number" id="fMin" min="0" inputmode="numeric" placeholder="Min" oninput="onFilterChange()"/><span>&ndash;</span><input type="number" id="fMax" min="0" inputmode="numeric" placeholder="Max" oninput="onFilterChange()"/></div></div>
+        <div class="fp-grp"><div class="fp-lbl">Size</div><div class="size-chips" id="sizeChips"></div></div>
+        <div class="fp-grp"><div class="fp-lbl">Rating</div>
+          <select id="fRating" onchange="onFilterChange()"><option value="0">Any rating</option><option value="4">4&#9733; &amp; up</option><option value="3">3&#9733; &amp; up</option></select></div>
+        <div class="fp-grp"><div class="fp-lbl">Availability</div>
+          <label class="fp-check"><input type="checkbox" id="fStock" onchange="onFilterChange()"/> In stock only</label></div>
+      </div>
+      <button class="fp-reset" id="filterReset" onclick="resetFilters()" style="display:none">Reset filters</button>
+    </div>
     <div class="prod-grid" id="prodGrid"></div>
   </div>
   <div class="newsletter-section">
@@ -123,6 +148,7 @@
         <div class="det-badge" id="detBadge"></div>
         <h1 class="det-name" id="detName"></h1>
         <div class="det-price" id="detPrice"></div>
+        <div class="low-stock-pill" id="detStock" style="display:none"></div>
                <div class="sec-lbl">Select Size</div>
         <div class="sizes" id="sizesWrap"></div>
         <div class="ship-box"><span style="font-size:1.4rem">&#128666;</span><div><div class="ship-txt">Nationwide Delivery &#9989;</div><div class="ship-sub">We deliver to all states in Nigeria</div></div></div>
@@ -130,6 +156,7 @@
           <button class="buy-now-btn" onclick="buyNow()">&#128172; Buy Now</button>
           <button class="atc-btn" onclick="addFromDetail()">&#128722; Add to Cart</button>
         </div>
+        <button class="share-btn" onclick="shareProduct()">&#128279; Share this product</button>
         <div class="det-meta" id="detMeta"></div>
         <div class="det-desc"><div class="det-desc-lbl">Description</div><div class="det-desc-txt" id="detDesc"></div></div>
         <div class="reviews-section" id="detReviewsSection"><div class="reviews-hdr"><div class="reviews-title">Customer Reviews</div><button class="add-review-btn" onclick="openReviewForm()">+ Write a Review</button></div><div class="reviews-summary" id="reviewsSummary" style="display:none"></div><div class="review-form" id="reviewForm"><div class="review-stars-pick" id="starPicker"><span class="star-pick" onmouseover="hoverStar(1)" onmouseout="unhoverStar()" onclick="updateStarPicker(1)">&#9733;</span><span class="star-pick" onmouseover="hoverStar(2)" onmouseout="unhoverStar()" onclick="updateStarPicker(2)">&#9733;</span><span class="star-pick" onmouseover="hoverStar(3)" onmouseout="unhoverStar()" onclick="updateStarPicker(3)">&#9733;</span><span class="star-pick" onmouseover="hoverStar(4)" onmouseout="unhoverStar()" onclick="updateStarPicker(4)">&#9733;</span><span class="star-pick" onmouseover="hoverStar(5)" onmouseout="unhoverStar()" onclick="updateStarPicker(5)">&#9733;</span></div><input class="review-f-inp" id="reviewName" placeholder="Your name" maxlength="60"/><textarea class="review-f-ta" id="reviewText" placeholder="Write your review (optional)..." maxlength="1000"></textarea><div style="display:flex;gap:.75rem"><button class="review-submit-btn" onclick="submitReview(this)">Submit Review</button><button class="review-submit-btn" style="background:var(--text3)" onclick="closeReviewForm()">Cancel</button></div></div><div id="reviewsList"><div class="no-reviews">No reviews yet. Be the first!</div></div></div>
@@ -251,7 +278,7 @@
       <div class="admin-f-grp"><label class="admin-f-lbl">Old Price (&#8358;)</label><input class="admin-f-inp" type="number" id="eOldPrice"/></div>
       <div class="admin-f-grp"><label class="admin-f-lbl">Stock (units in hand) *</label><input class="admin-f-inp" type="number" min="0" id="eStock"/></div>
       <div class="admin-f-grp"><label class="admin-f-lbl">Badge</label><select class="admin-f-inp" id="eBadge"><option value="">None</option><option value="new">NEW</option><option value="sale">SALE</option><option value="limited">LIMITED</option></select></div>
-      <div class="admin-f-grp"><label class="admin-f-lbl">Sizes * (comma separated)</label><input class="admin-f-inp" id="eSizes"/></div>
+      <div class="admin-f-grp"><label class="admin-f-lbl">Sizes * (comma separated)</label><input class="admin-f-inp" id="eSizes" placeholder="e.g. S, M, L+1000, XL+2000"/><div class="admin-gallery-hint">Add <b>+amount</b> after a size to charge more for it: <b>L+1000</b> means L costs &#8358;1,000 extra. No +amount = normal price.</div></div>
       <div class="admin-f-grp"><label class="admin-f-lbl">Color</label><input class="admin-f-inp" id="eColor"/></div>
       <div class="admin-f-grp"><label class="admin-f-lbl">Material</label><input class="admin-f-inp" id="eMaterial"/></div>
       <div class="admin-f-grp"><label class="admin-f-lbl">Emoji</label><input class="admin-f-inp" id="eEmoji"/></div>
@@ -261,6 +288,14 @@
           <input type="file" id="ePhotoInput" accept="image/*" multiple hidden onchange="handlePhotoPick(this,'edit')">
           <label for="ePhotoInput" class="photo-pick-btn">&#128247; Choose photos from gallery</label>
           <div class="admin-gallery-hint">Pick one or many. The first photo is the cover &mdash; tap &#9733; Cover on another photo to change it.</div></div>
+        <div class="admin-f-grp" style="grid-column:1/-1"><label class="admin-f-lbl">360&deg; View (optional)</label>
+          <label class="spin-toggle"><input type="checkbox" id="eSpinOn"/> Turn on 360&deg; view for this product</label>
+          <div class="img-strip spin-strip" id="eSpinStrip"></div>
+          <div class="spin-count" id="eSpinCount">No frames yet</div>
+          <input type="file" id="eSpinInput" accept="image/*" multiple hidden onchange="handleSpinPick(this,'edit')">
+          <label for="eSpinInput" class="photo-pick-btn">&#128260; Add 360&deg; frames from gallery</label>
+          <div class="spin-tools"><button type="button" onclick="previewSpin('edit')">&#9654; Preview</button><button type="button" onclick="reverseSpin('edit')">&#8644; Reverse</button><button type="button" onclick="clearSpin('edit')">&#10005; Clear all</button></div>
+          <div class="admin-gallery-hint">Take 12&ndash;24 photos while turning the item one full circle (same distance, plain background). Pick them all at once &mdash; they&rsquo;re ordered by file name. If it spins the wrong way, tap Reverse.</div></div>
     </div>
     <div class="admin-f-grp" style="margin-top:.5rem"><label class="admin-f-lbl">Product Description</label><textarea class="admin-f-inp" id="eDesc" style="height:80px;resize:none"></textarea></div>
     <button class="edit-save-btn" onclick="saveEditProduct(this)">&#10003; Save Changes</button>
@@ -285,7 +320,7 @@
         <div class="admin-f-grp"><label class="admin-f-lbl">Old Price (&#8358;)</label><input class="admin-f-inp" type="number" id="aOldPrice" placeholder="e.g. 20000"/></div>
         <div class="admin-f-grp"><label class="admin-f-lbl">Stock (units in hand) *</label><input class="admin-f-inp" type="number" min="0" id="aStock" value="1"/></div>
         <div class="admin-f-grp"><label class="admin-f-lbl">Badge</label><select class="admin-f-inp" id="aBadge"><option value="">None</option><option value="new">NEW</option><option value="sale">SALE</option><option value="limited">LIMITED</option></select></div>
-        <div class="admin-f-grp"><label class="admin-f-lbl">Sizes * (comma separated)</label><input class="admin-f-inp" id="aSizes" placeholder="e.g. S, M, L, XL"/></div>
+        <div class="admin-f-grp"><label class="admin-f-lbl">Sizes * (comma separated)</label><input class="admin-f-inp" id="aSizes" placeholder="e.g. S, M, L+1000, XL+2000"/><div class="admin-gallery-hint">Add <b>+amount</b> after a size to charge more for it: <b>L+1000</b> means L costs &#8358;1,000 extra. No +amount = normal price.</div></div>
         <div class="admin-f-grp"><label class="admin-f-lbl">Color</label><input class="admin-f-inp" id="aColor" placeholder="e.g. Black"/></div>
         <div class="admin-f-grp"><label class="admin-f-lbl">Material</label><input class="admin-f-inp" id="aMaterial" placeholder="e.g. Cotton"/></div>
         <div class="admin-f-grp"><label class="admin-f-lbl">Emoji</label><input class="admin-f-inp" id="aEmoji" placeholder="e.g. &#128085;"/></div>
@@ -295,6 +330,14 @@
           <input type="file" id="aPhotoInput" accept="image/*" multiple hidden onchange="handlePhotoPick(this,'add')">
           <label for="aPhotoInput" class="photo-pick-btn">&#128247; Choose photos from gallery</label>
           <div class="admin-gallery-hint">Pick one or many. The first photo is the cover &mdash; tap &#9733; Cover on another photo to change it.</div></div>
+        <div class="admin-f-grp" style="grid-column:1/-1"><label class="admin-f-lbl">360&deg; View (optional)</label>
+          <label class="spin-toggle"><input type="checkbox" id="aSpinOn"/> Turn on 360&deg; view for this product</label>
+          <div class="img-strip spin-strip" id="aSpinStrip"></div>
+          <div class="spin-count" id="aSpinCount">No frames yet</div>
+          <input type="file" id="aSpinInput" accept="image/*" multiple hidden onchange="handleSpinPick(this,'add')">
+          <label for="aSpinInput" class="photo-pick-btn">&#128260; Add 360&deg; frames from gallery</label>
+          <div class="spin-tools"><button type="button" onclick="previewSpin('add')">&#9654; Preview</button><button type="button" onclick="reverseSpin('add')">&#8644; Reverse</button><button type="button" onclick="clearSpin('add')">&#10005; Clear all</button></div>
+          <div class="admin-gallery-hint">Take 12&ndash;24 photos while turning the item one full circle (same distance, plain background). Pick them all at once &mdash; they&rsquo;re ordered by file name. If it spins the wrong way, tap Reverse.</div></div>
       </div>
       <div class="admin-f-grp"><label class="admin-f-lbl">Product Description</label><textarea class="admin-f-inp" id="aDesc" style="height:80px;resize:none" placeholder="Describe this product..."></textarea></div>
       <div class="admin-form-actions" style="margin-top:1rem">
@@ -327,6 +370,16 @@
   <div class="lightbox-thumbs" id="lbThumbs"></div>
   <div class="lightbox-counter" id="lbCounter"></div>
   <div class="lightbox-zoom-hint" id="lbZoomHint">Pinch or scroll to zoom</div>
+</div>
+<div class="spin-overlay" id="spinOverlay">
+  <button class="spin-close" onclick="closeSpinViewer()" aria-label="Close">&#10005;</button>
+  <div class="spin-title" id="spinTitle"></div>
+  <div class="spin-stage" id="spinStage"></div>
+  <div class="spin-controls">
+    <button onclick="spinStep(-1)" aria-label="Rotate left">&#8592;</button>
+    <button class="spin-photos-btn" id="spinPhotosBtn" onclick="spinToPhotos()" style="display:none">&#128247; Photos</button>
+    <button onclick="spinStep(1)" aria-label="Rotate right">&#8594;</button>
+  </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
