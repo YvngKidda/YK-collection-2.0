@@ -58,10 +58,6 @@
 [data-theme="dark"] .tb-sort select,[data-theme="dark"] .fp-grp select,[data-theme="dark"] .fp-price input{background:#0d1220 !important;border-color:#1e2d45 !important;color:#e2e8f0 !important}
 
 /* price follows the chosen size */
-.price-note{display:inline-block;margin-left:.7rem;font-size:.72rem;font-weight:600;color:var(--text3);vertical-align:middle}
-.det-price.price-pop{animation:pricePop .35s ease}
-@keyframes pricePop{0%{transform:scale(1.08)}100%{transform:scale(1)}}
-.prod-price .from{font-size:.68rem;font-weight:600;color:var(--text3)}
 
 /* low stock + share */
 .low-stock{font-size:.74rem;font-weight:700;color:#d97706;margin-bottom:.4rem}
@@ -95,3 +91,39 @@
 .spin-tools{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem}
 .spin-tools button{background:var(--sky-light);border:1px solid var(--sky);color:var(--sky-dark);padding:.5rem .9rem;border-radius:50px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif}
 [data-theme="dark"] .spin-tools button{background:#0d1a2b !important;border-color:#1e4a6b !important;color:#38bdf8 !important}
+
+/* ── UPDATE 3: icons + size-based photo ── */
+/* Icons are inline SVG (see the sprite at the top of index.html). They are drawn in the text colour and sized by font-size. */
+.ic{width:1em;height:1em;display:inline-block;vertical-align:-.14em;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ic-chev{width:.8em;height:.8em;margin-left:.2em;vertical-align:-.05em}
+.ic-ok{color:var(--green,#16a34a)}
+.ic-ph{color:var(--sky);opacity:.6;stroke-width:1.2}
+.ic-xl{width:8rem;height:8rem}
+.land-feat-icon .ic,.val-icon .ic,.ci-icon .ic,.newsletter-icon .ic,.cart-empty-icon .ic,.admin-login-icon .ic,.about-img .ic,.form-ok-ic .ic,.comp-ok-ic .ic{stroke-width:1.6}
+.land-feat-icon,.val-icon,.ci-icon,.newsletter-icon,.admin-login-icon,.about-img{color:var(--sky-dark)}
+.search-icon .ic{width:1.1em;height:1.1em}
+.gallery-arrow .ic,.lightbox-arrow .ic{width:1.3em;height:1.3em}
+.spin-controls .ic{width:1.2em;height:1.2em}
+.spin-close .ic{width:1.3em;height:1.3em}
+.spin-close{display:inline-flex;align-items:center;justify-content:center}
+.close-cart .ic,.edit-modal-close .ic,.lightbox-close .ic{width:1.1em;height:1.1em}
+.theme-toggle .ic{width:1.25em;height:1.25em}
+.comp-tab .ic,.photo-pick-btn .ic,.admin-add-btn .ic,.admin-clear-btn .ic,.spin-tools .ic,.share-btn .ic,.buy-now-btn .ic,.atc-btn .ic,.newsletter-btn .ic,.tb-btn .ic,.admin-edit-btn .ic,.admin-view-btn .ic,.admin-comp-del .ic,.admin-del-btn .ic,.edit-save-btn .ic{width:1.1em;height:1.1em;margin-right:.3em}
+.admin-del-btn .ic{margin-right:0}
+.img-x .ic{width:.8em;height:.8em;margin:0}
+.wa-float-btn .ic{width:1em;height:1em;margin:0}
+.low-stock .ic,.low-stock-pill .ic,.spin-tag .ic,.spin-pill .ic,.spin-hint .ic{width:1.05em;height:1.05em;margin-right:.2em}
+.ship-box .ic{width:1.1em;height:1.1em}
+.ship-txt .ic{width:1em;height:1em;margin-left:.2em}
+.land-badge .ic{width:1em;height:1em;margin-right:.2em;vertical-align:-.12em}
+
+/* Size -> photo size. script.js sets --size-scale on #detGallery (M = 1, each size up = +5%, each size down = -5%).
+   The photo is drawn at 90% of the frame when the scale is 1, so bigger sizes have room to grow without being cut off. */
+.det-gallery-slide{overflow:hidden}
+.det-gallery-slide img,.det-gallery-slide .ic-ph{transform:scale(calc(var(--size-scale, 1) * .9));transition:transform .45s cubic-bezier(.4,0,.2,1)}
+@media (prefers-reduced-motion:reduce){.det-gallery-slide img,.det-gallery-slide .ic-ph{transition:none}}
+
+/* small alignment fixes */
+.search-icon,.search-clear{top:calc(50% + .75rem)}          /* the search box has padding on top only, so "50%" sat too high */
+@media(max-width:768px){.search-icon,.search-clear{top:calc(50% + .5rem)}}
+.ship-box .ic{color:var(--green)}

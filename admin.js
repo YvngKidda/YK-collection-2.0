@@ -25,7 +25,7 @@ const uid = () => (window.crypto && crypto.randomUUID)
 // Turn a Supabase error into something readable on a phone screen.
 function dbMsg(error) {
   const m = (error && error.message) || String(error);
-  if (/size_surcharges|spin_images|spin_enabled|schema cache|does not exist/i.test(m)) return 'Run supabase-migration-2.sql in Supabase first.';
+  if (/spin_images|spin_enabled|schema cache|does not exist/i.test(m)) return 'Run supabase-migration-2.sql in Supabase first.';
   if (/row-level security|permission denied|jwt|PGRST116|not allowed/i.test(m)) return 'Not allowed \u2014 log in as admin again.';
   return m;
 }
@@ -128,30 +128,24 @@ function handleAdminTrigger() {
 }
 
 /* ════════════════════════════════════════════════════════════════
-   SIZES WITH OPTIONAL PRICE INCREASES
-   "S, M, L+1000, XL+2000"  →  sizes S/M/L/XL, and L costs ₦1,000 more, XL ₦2,000 more
+   SIZES   "S, M, L, XL"  →  the size buttons on the product page.
+   (One price per product — you set it in the Price box. The photo grows slightly for bigger sizes.)
    ════════════════════════════════════════════════════════════════ */
 function parseSizes(text) {
-  const cleaned = String(text || '').replace(/(\+\s*\d+),(?=\d{3}\b)/g, '$1');   // allow "L+1,000"
-  const sizes = [], add = {};
-  for (const raw of cleaned.split(',')) {
-    const t = raw.trim();
-    if (!t) continue;
-    const m = t.match(/^(.+?)\s*\+\s*(\d+)$/);
-    const name = (m ? m[1] : t).trim();
-    if (!name) return { error: 'Check the sizes: a size name is missing' };
+  const sizes = [], seen = new Set();
+  for (const raw of String(text || '').split(',')) {
+    const name = raw.trim();
+    if (!name) continue;
     if (name.length > 20) return { error: `Size "${name.slice(0, 12)}\u2026" is too long` };
-    if (/[+]/.test(name)) return { error: `Check the size "${name}". Use the form L+1000` };
-    if (sizes.includes(name)) continue;
+    const key = name.toUpperCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
     sizes.push(name);
-    if (m && Number(m[2]) > 0) add[name] = Number(m[2]);
   }
   if (!sizes.length) return { error: 'Please enter at least one size' };
-  return { sizes, add };
+  return { sizes };
 }
-function formatSizes(p) {
-  return p.sizes.map((s) => (p.sizeAdd && p.sizeAdd[s] ? `${s}+${p.sizeAdd[s]}` : s)).join(', ');
-}
+function formatSizes(p) { return p.sizes.join(', '); }
 
 /* ════════════════════════════════════════════════════════════════
    PHOTOS: gallery → compress → Supabase Storage → public URL
@@ -229,14 +223,14 @@ function renderStrips(mode) {
   if (imgEl) {
     imgEl.innerHTML = formList(mode, 'img').map((u, i) =>
       `<div class="img-thumb${i === 0 ? ' cover' : ''}"><img src="${esc(u)}" alt=""/>` +
-      `<button type="button" class="img-x" onclick="removeFormImage('${mode}','img',${i})" aria-label="Remove photo">&#10005;</button>` +
+      `<button type="button" class="img-x" onclick="removeFormImage('${mode}','img',${i})" aria-label="Remove photo">${ic('x')}</button>` +
       `<button type="button" class="img-star" onclick="makeCover('${mode}',${i})">${i === 0 ? 'Cover' : '&#9733; Cover'}</button></div>`).join('');
   }
   if (spinEl) {
     const frames = formList(mode, 'spin');
     spinEl.innerHTML = frames.map((u, i) =>
       `<div class="img-thumb spin-thumb"><img src="${esc(u)}" alt=""/><span class="spin-n">${i + 1}</span>` +
-      `<button type="button" class="img-x" onclick="removeFormImage('${mode}','spin',${i})" aria-label="Remove frame">&#10005;</button></div>`).join('');
+      `<button type="button" class="img-x" onclick="removeFormImage('${mode}','spin',${i})" aria-label="Remove frame">${ic('x')}</button></div>`).join('');
     const count = $(pfx + 'SpinCount');
     if (count) {
       count.textContent = frames.length
@@ -313,7 +307,7 @@ async function pickAndUpload(input, mode, kind) {
   adminForm.uploading--;
   if (label) { label.classList.remove('busy'); label.innerHTML = idleHtml; }
   const noun = kind === 'spin' ? 'frame' : 'photo';
-  if (ok === files.length) showToast(ok === 1 ? `1 ${noun} uploaded \u2705` : `${ok} ${noun}s uploaded \u2705`);
+  if (ok === files.length) showToast(ok === 1 ? `1 ${noun} uploaded` : `${ok} ${noun}s uploaded`);
   else showToast(`${ok}/${files.length} uploaded. ${lastErr}`);
 }
 
@@ -326,15 +320,15 @@ function renderAdminProducts() {
   if (!products.length) { g.innerHTML = "<div class='admin-empty'>No products yet.</div>"; return; }
   g.innerHTML = products.map((p) =>
     "<div class='admin-prod-row'>" +
-    `<div class='admin-prod-thumb'>${p.img ? `<img src="${esc(p.img)}" alt=""/>` : esc(p.emoji)}</div>` +
+    `<div class='admin-prod-thumb'>${p.img ? `<img src="${esc(p.img)}" alt=""/>` : ic('bag', 'ic-ph')}</div>` +
     `<div class='admin-prod-info'><div class='admin-prod-name'>${esc(p.name)}${p.soldOut ? " <span style='color:var(--red);font-size:.72rem'>[SOLD OUT]</span>" : ''}</div>` +
-    `<div class='admin-prod-meta'>${naira(p.price)}${hasSizePricing(p) ? '+' : ''} &bull; ${esc(catMap[p.cat] || p.cat)} &bull; Stock: ${p.stock}` +
+    `<div class='admin-prod-meta'>${naira(p.price)} &bull; ${esc(catMap[p.cat] || p.cat)} &bull; Stock: ${p.stock}` +
     `${p.badge ? ` &bull; <span class='admin-badge-tag'>${esc(p.badge.toUpperCase())}</span>` : ''}` +
     `${p.spinEnabled ? " &bull; <span class='admin-badge-tag'>360&deg;</span>" : ''}</div></div>` +
     "<div style='display:flex;gap:.4rem;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end'>" +
-    `<button class='admin-edit-btn' onclick='openEditModal(${p.id})'>&#9998; Edit</button>` +
-    `<button class='admin-edit-btn' style='background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.25);color:var(--red)' onclick='toggleSoldOut(${p.id})'>${p.soldOut ? '\u2705 In Stock' : '\uD83D\uDEAB Sold Out'}</button>` +
-    `<button class='admin-del-btn' onclick='deleteProduct(${p.id})'>&#128465;</button>` +
+    `<button class='admin-edit-btn' onclick='openEditModal(${p.id})'>${ic('edit')} Edit</button>` +
+    `<button class='admin-edit-btn' style='background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.25);color:var(--red)' onclick='toggleSoldOut(${p.id})'>${p.soldOut ? ic('check-circle') + ' In Stock' : ic('ban') + ' Sold Out'}</button>` +
+    `<button class='admin-del-btn' onclick='deleteProduct(${p.id})' aria-label='Delete product'>${ic('trash')}</button>` +
     '</div></div>').join('');
 }
 
@@ -359,9 +353,9 @@ function readProductForm(pfx) {
     row: {
       title: v('Name').slice(0, 150), category: $(pfx + 'Cat').value, price,
       old_price: oldRaw ? parseInt(oldRaw, 10) : null, stock,
-      badge: $(pfx + 'Badge').value || null, sizes: sz.sizes, size_surcharges: sz.add,
+      badge: $(pfx + 'Badge').value || null, sizes: sz.sizes,
       color: v('Color'), material: v('Material'),
-      emoji: v('Emoji') || '\uD83D\uDC55', description: v('Desc'),
+      description: v('Desc'),
       spin_enabled: spinOn
     }
   };
@@ -382,13 +376,13 @@ async function addAdminProduct(btn) {
   resetAddForm(false);                                      // photos are saved now — keep them in storage
   renderAdminProducts();
   applyView();
-  showToast(`${data.title} added! \uD83C\uDF89`);
+  showToast(`${data.title} added!`);
 }
 
 function resetAddForm(deleteUploads) {
   if (deleteUploads) deleteStoredImages(adminForm.add.img.concat(adminForm.add.spin));
   adminForm.add = { img: [], spin: [] };
-  ['aName', 'aPrice', 'aOldPrice', 'aSizes', 'aColor', 'aMaterial', 'aEmoji', 'aDesc'].forEach((id) => { $(id).value = ''; });
+  ['aName', 'aPrice', 'aOldPrice', 'aSizes', 'aColor', 'aMaterial', 'aDesc'].forEach((id) => { $(id).value = ''; });
   $('aStock').value = '1';
   $('aCat').value = 'clothing-male';
   $('aBadge').value = '';
@@ -413,7 +407,6 @@ function openEditModal(id) {
   $('eSizes').value = formatSizes(p);
   $('eColor').value = p.color;
   $('eMaterial').value = p.material;
-  $('eEmoji').value = p.emoji;
   $('eDesc').value = p.description;
   $('eSpinOn').checked = p.spinEnabled;
   renderStrips('edit');
@@ -498,7 +491,7 @@ function renderAdminCatManager() {
   const btn = (soon, onclick) =>
     `<button onclick='${onclick}' style='padding:.4rem 1rem;border-radius:50px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:DM Sans,sans-serif;border:1px solid;transition:all .2s;` +
     (soon ? 'background:rgba(245,158,11,.12);color:#f59e0b;border-color:rgba(245,158,11,.3)' : 'background:rgba(34,197,94,.1);color:var(--green);border-color:rgba(34,197,94,.25)') +
-    `'>${soon ? '&#128683; Coming Soon' : '&#9989; Active'}</button>`;
+    `'>${soon ? ic('ban') + ' Coming Soon' : ic('check-circle') + ' Active'}</button>`;
   const row = (label, soon, onclick, last) =>
     `<div style='display:flex;align-items:center;justify-content:space-between;padding:.65rem 0;${last ? '' : 'border-bottom:1px solid var(--border)'}'>` +
     `<span style='font-size:.88rem;color:var(--text);font-weight:500'>${esc(label)}</span>${btn(soon, onclick)}</div>`;
@@ -558,7 +551,7 @@ function renderAdminFeedback() {
     `<span class='admin-comp-date'>${esc(new Date(c.created_at).toLocaleString('en-NG', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }))}</span></div>` +
     (c.email ? `<div class='admin-comp-date' style='margin-bottom:.4rem'>${esc(c.email)}</div>` : '') +
     `<div class='admin-comp-msg'>${esc(c.message)}</div>` +
-    `<button class='admin-comp-del' onclick='deleteFeedback(${c.id})'>&#128465; Delete</button></div>`).join('');
+    `<button class='admin-comp-del' onclick='deleteFeedback(${c.id})'>${ic('trash')} Delete</button></div>`).join('');
 }
 async function deleteFeedback(id) {
   if (!requireAdmin()) return;

@@ -37,12 +37,32 @@ const isUrl = (s) => typeof s === 'string' && /^https?:\/\//i.test(s);
 const fmtDate = (iso) => new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
 const starsText = (n) => '\u2605'.repeat(n) + '\u2606'.repeat(5 - n);
 const sizeKey = (s) => String(s || '').trim().toUpperCase();
-// Per-size pricing: base price + the extra amount set for that size (size_surcharges in the database)
-const sizeExtra = (p, size) => (size && p.sizeAdd[size]) || 0;
-const priceFor = (p, size) => p.price + sizeExtra(p, size);
-const oldPriceFor = (p, size) => (p.oldPrice ? p.oldPrice + sizeExtra(p, size) : null);
-const hasSizePricing = (p) => Object.keys(p.sizeAdd).length > 0;
 const isLowStock = (p) => p.stock > 0 && p.stock <= LOW_STOCK;
+
+// Icons: every icon is an inline SVG drawn from the sprite at the top of index.html (<symbol id="i-NAME">).
+// They look the same on every phone and computer, unlike emoji, which depend on the device's fonts.
+const ic = (name, cls) => `<svg class="ic${cls ? ' ' + cls : ''}" aria-hidden="true" focusable="false"><use href="#i-${name}"/></svg>`;
+
+// Size -> how big the product photo is drawn. M = normal, each step up grows it slightly (S and below shrink slightly).
+const SIZE_SCALE_STEP = 0.05, SIZE_SCALE_MIN = 0.88, SIZE_SCALE_MAX = 1.25;
+const SIZE_RANK = { XXS: -3, XS: -2, S: -1, M: 0, L: 1, XL: 2, XXL: 3, '2XL': 3, XXXL: 4, '3XL': 4, XXXXL: 5, '4XL': 5 };
+const isNumSize = (k) => /^\d+(\.\d+)?$/.test(k);
+function sizeScale(p, size) {
+  const k = sizeKey(size);
+  let steps = null;
+  if (Object.prototype.hasOwnProperty.call(SIZE_RANK, k)) steps = SIZE_RANK[k];
+  else if (isNumSize(k)) {                         // shoe/number sizes: the middle size of this product is "normal"
+    const nums = Array.from(new Set(p.sizes.map(sizeKey).filter(isNumSize).map(Number))).sort((a, b) => a - b);
+    const i = nums.indexOf(Number(k));
+    if (i > -1) steps = i - Math.floor((nums.length - 1) / 2);
+  }
+  if (steps === null) return 1;
+  return Math.min(SIZE_SCALE_MAX, Math.max(SIZE_SCALE_MIN, 1 + steps * SIZE_SCALE_STEP));
+}
+function applySizeScale() {
+  const g = $('detGallery');
+  if (g) g.style.setProperty('--size-scale', String(selSize && curProd ? sizeScale(curProd, selSize) : 1));
+}
 
 let toastTimer = null;
 function showToast(msg) {
@@ -74,15 +94,11 @@ const STORAGE_CART = 'yk_cart_v1';
 function rowToProduct(r) {
   const imgs = Array.isArray(r.images) ? r.images.filter(Boolean) : [];
   const spin = Array.isArray(r.spin_images) ? r.spin_images.filter(Boolean) : [];
-  const add = {};
-  if (r.size_surcharges && typeof r.size_surcharges === 'object') {
-    Object.keys(r.size_surcharges).forEach((k) => { const n = Number(r.size_surcharges[k]); if (n > 0) add[k] = n; });
-  }
   return {
     id: r.id, name: r.title, description: r.description || '',
     price: r.price, oldPrice: r.old_price, stock: r.stock, soldOut: r.stock <= 0,
-    cat: r.category, badge: r.badge, sizes: r.sizes || [], sizeAdd: add,
-    color: r.color || '', material: r.material || '', emoji: r.emoji || '\uD83D\uDC55',
+    cat: r.category, badge: r.badge, sizes: r.sizes || [],
+    color: r.color || '', material: r.material || '',
     images: imgs, img: imgs[0] || spin[0] || null,
     spinImages: spin, spinEnabled: !!r.spin_enabled && spin.length >= 4,   // 360° needs at least 4 frames
     createdAt: r.created_at
@@ -200,19 +216,19 @@ function renderProds(list) {
     const r = ratings[p.id];
     const click = p.soldOut ? "showToast('This product is sold out')" : `openProd(${p.id})`;
     return `<div class="prod-card${p.soldOut ? ' sold-out' : ''}" style="animation-delay:${Math.min(i, 12) * 0.07}s" onclick="${click}">` +
-      `<div class="prod-thumb">${p.img ? `<img src="${esc(p.img)}" alt="${esc(p.name)}" loading="lazy"/>` : esc(p.emoji)}` +
+      `<div class="prod-thumb">${p.img ? `<img src="${esc(p.img)}" alt="${esc(p.name)}" loading="lazy"/>` : ic('bag', 'ic-ph')}` +
       (p.soldOut ? '<div class="prod-sold-overlay"><div class="prod-sold-stamp">Sold Out</div></div>' : '') +
       '<div class="prod-thumb-overlay"></div>' +
       (p.badge && !p.soldOut ? `<div class="prod-badge ${esc(p.badge)}">${esc(p.badge.toUpperCase())}</div>` : '') +
-      (p.spinEnabled ? '<div class="spin-tag">&#8635; 360&deg;</div>' : '') +
+      (p.spinEnabled ? `<div class="spin-tag">${ic('rotate')} 360&deg;</div>` : '') +
       '</div><div class="prod-info">' +
       `<div class="prod-cat">${esc(catMap[p.cat] || p.cat)}</div>` +
       `<div class="prod-name">${esc(p.name)}</div>` +
       `<div class="prod-rating">${r && r.count
         ? `\u2605${r.avg.toFixed(1)} (${r.count} review${r.count !== 1 ? 's' : ''})`
         : '<span style="color:var(--text3);font-size:.75rem">No reviews yet</span>'}</div>` +
-      (isLowStock(p) ? `<div class="low-stock">\uD83D\uDD25 Only ${p.stock} left</div>` : '') +
-      `<div><span class="prod-price">${hasSizePricing(p) ? '<small class="from">From </small>' : ''}${naira(p.price)}</span>` +
+      (isLowStock(p) ? `<div class="low-stock">${ic('flame')} Only ${p.stock} left</div>` : '') +
+      `<div><span class="prod-price">${naira(p.price)}</span>` +
       `${p.oldPrice ? `<span class="prod-price-old">${naira(p.oldPrice)}</span>` : ''}</div>` +
       `<button class="view-btn">${p.soldOut ? 'Sold Out' : 'View Product \u2192'}</button></div></div>`;
   }).join('');
@@ -266,7 +282,6 @@ function applyView() {
 }
 
 /* ── sort / filter toolbar ── */
-const SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '2XL', '3XL', '4XL'];
 function buildSizeChips() {
   const box = $('sizeChips');
   if (!box) return;
@@ -274,9 +289,8 @@ function buildSizeChips() {
   products.forEach((p) => p.sizes.forEach((s) => { const k = sizeKey(s); if (k) all.add(k); }));
   Array.from(viewState.sizes).forEach((k) => { if (!all.has(k)) viewState.sizes.delete(k); });
   const rank = (k) => {
-    const i = SIZE_ORDER.indexOf(k);
-    if (i > -1) return [0, i];
-    return /^\d+(\.\d+)?$/.test(k) ? [1, Number(k)] : [2, 0];
+    if (Object.prototype.hasOwnProperty.call(SIZE_RANK, k)) return [0, SIZE_RANK[k]];
+    return isNumSize(k) ? [1, Number(k)] : [2, 0];
   };
   const keys = Array.from(all).sort((a, b) => {
     const ra = rank(a), rb = rank(b);
@@ -380,7 +394,7 @@ function updateActiveFilterStrip(label) {
   const strip = $('activeFilterStrip');
   if (!strip) return;
   strip.classList.add('show');
-  strip.innerHTML = `<div class="active-filter-chip">${esc(label)}<button onclick="clearActiveFilter()">&#10005;</button></div>`;
+  strip.innerHTML = `<div class="active-filter-chip">${esc(label)}<button onclick="clearActiveFilter()" aria-label="Remove filter">${ic('x')}</button></div>`;
 }
 function clearActiveFilterStrip() {
   const strip = $('activeFilterStrip');
@@ -408,9 +422,10 @@ function openProd(id) {
   if (!p) return;
   curProd = p; selSize = null;
   buildGallery(p);
+  applySizeScale();
   $('detBadge').textContent = p.badge ? p.badge.toUpperCase() : (catMap[p.cat] || p.cat);
   $('detName').textContent = p.name;
-  renderDetailPrice(false);
+  renderDetailPrice();
   renderStockPill();
   $('sizesWrap').innerHTML = p.sizes.map((s) =>
     `<button class="sz-btn" data-size="${esc(s)}" onclick="pickSize(this)">${esc(s)}</button>`).join('');
@@ -432,22 +447,18 @@ function pickSize(btn) {
   document.querySelectorAll('.sz-btn').forEach((b) => b.classList.remove('sel'));
   btn.classList.add('sel');
   selSize = btn.dataset.size;
-  renderDetailPrice(true);                       // price follows the size the shopper taps
+  applySizeScale();                              // the photo grows slightly for bigger sizes
 }
-// Shows the price for the chosen size (or the base price + a note until a size is chosen)
-function renderDetailPrice(animate) {
+// The price is the one price you set for the product (it does not change with size)
+function renderDetailPrice() {
   const p = curProd;
   if (!p) return;
-  const price = priceFor(p, selSize), old = oldPriceFor(p, selSize);
-  const el = $('detPrice');
-  el.innerHTML = naira(price) + (old ? `<span class="det-price-old">${naira(old)}</span>` : '') +
-    (!selSize && hasSizePricing(p) ? '<span class="price-note">Price varies by size</span>' : '');
-  if (animate) { el.classList.remove('price-pop'); void el.offsetWidth; el.classList.add('price-pop'); }
+  $('detPrice').innerHTML = naira(p.price) + (p.oldPrice ? `<span class="det-price-old">${naira(p.oldPrice)}</span>` : '');
 }
 function renderStockPill() {
   const el = $('detStock');
   if (!el || !curProd) return;
-  if (isLowStock(curProd)) { el.textContent = `\uD83D\uDD25 Only ${curProd.stock} left \u2014 order soon`; el.style.display = 'inline-flex'; }
+  if (isLowStock(curProd)) { el.innerHTML = `${ic('flame')} Only ${curProd.stock} left \u2014 order soon`; el.style.display = 'inline-flex'; }
   else el.style.display = 'none';
 }
 
@@ -536,7 +547,7 @@ function renderReviews(revs) {
     (r.comment ? `<div class="review-text">${esc(r.comment)}</div>` : '') +
     // Delete button only appears while you're logged in as admin (the database enforces it either way)
     ((typeof adminState !== 'undefined' && adminState.isAdmin)
-      ? `<button class="admin-comp-del" onclick="adminDeleteReview(${r.id})">&#128465; Delete</button>` : '') +
+      ? `<button class="admin-comp-del" onclick="adminDeleteReview(${r.id})">${ic('trash')} Delete</button>` : '') +
     '</div>').join('');
 }
 
@@ -558,7 +569,7 @@ function syncCartWithProducts() {
   cart.forEach((it) => {
     const p = products.find((x) => x.id === it.id);
     if (!p || p.soldOut || !p.sizes.includes(it.size)) return;
-    next.push(Object.assign({}, it, { name: p.name, price: priceFor(p, it.size), img: p.img, emoji: p.emoji, cat: p.cat }));
+    next.push(Object.assign({}, it, { name: p.name, price: p.price, img: p.img, cat: p.cat }));
   });
   if (next.length !== cart.length) showToast('Some items in your cart are no longer available');
   cart = next; saveCart(); updateCart();
@@ -571,7 +582,7 @@ function addFromDetail() {
   if (ex) {
     if (ex.qty >= p.stock) { showToast(`Only ${p.stock} in stock`); return; }
     ex.qty++;
-  } else cart.push({ id: p.id, name: p.name, cat: p.cat, emoji: p.emoji, img: p.img, price: priceFor(p, selSize), key, size: selSize, qty: 1 });
+  } else cart.push({ id: p.id, name: p.name, cat: p.cat, img: p.img, price: p.price, key, size: selSize, qty: 1 });
   saveCart(); updateCart(); bumpCount();
   showToast(`${p.name} (${selSize}) added to cart!`);
   setTimeout(toggleCart, 400);
@@ -579,7 +590,7 @@ function addFromDetail() {
 function buyNow() {
   if (!selSize) { showToast('Please select a size first'); return; }
   const p = curProd;
-  const msg = `QUICK ORDER - YK COLLECTION\n\n${p.name} (Size: ${selSize})\nPrice: NGN${priceFor(p, selSize).toLocaleString()}\n\nNationwide Delivery\n\nPlease confirm my order. Thank you!`;
+  const msg = `QUICK ORDER - YK COLLECTION\n\n${p.name} (Size: ${selSize})\nPrice: NGN${p.price.toLocaleString()}\n\nNationwide Delivery\n\nPlease confirm my order. Thank you!`;
   window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 function updateCart() {
@@ -590,11 +601,11 @@ function updateCart() {
   $('cartSubtitle').textContent = `${count} item${count !== 1 ? 's' : ''}`;
   const box = $('cartItems');
   if (!cart.length) {
-    box.innerHTML = "<div class='cart-empty'><div class='cart-empty-icon'>\uD83D\uDED2</div><p>Your cart is empty</p></div>";
+    box.innerHTML = `<div class='cart-empty'><div class='cart-empty-icon'>${ic('cart')}</div><p>Your cart is empty</p></div>`;
     return;
   }
   box.innerHTML = cart.map((it) =>
-    `<div class="ci"><div class="ci-thumb">${it.img ? `<img src="${esc(it.img)}" alt=""/>` : esc(it.emoji)}</div>` +
+    `<div class="ci"><div class="ci-thumb">${it.img ? `<img src="${esc(it.img)}" alt=""/>` : ic('bag', 'ic-ph')}</div>` +
     `<div style="flex:1"><div class="ci-name">${esc(it.name)}</div><div class="ci-size">Size: ${esc(it.size)}</div>` +
     `<div class="ci-price">${naira(it.price * it.qty)}</div><div class="ci-qty">` +
     `<button class="qty-btn" data-act="dec" data-key="${esc(it.key)}">\u2212</button><span class="qty-num">${it.qty}</span>` +
@@ -670,27 +681,28 @@ function resetCompForm() {
 /* ════════════════════════════════════════════════════════════════
    PRODUCT GALLERY & LIGHTBOX
    ════════════════════════════════════════════════════════════════ */
+const NO_PHOTO = 'no-photo';     // stands in for a product that has no photo yet (drawn as a bag icon)
 let galleryIndex = 0, galleryImages = [];
 let lightboxZoom = 1, lightboxOffset = { x: 0, y: 0 }, lightboxDragStart = { x: 0, y: 0 }, lightboxPinchDist = 0;
 let galleryTouchStartX = 0, galleryTouchStartY = 0;
 
 function buildGallery(p) {
-  galleryImages = p.images.length ? p.images.slice() : (p.spinImages.length ? [p.spinImages[0]] : [p.emoji]);
+  galleryImages = p.images.length ? p.images.slice() : (p.spinImages.length ? [p.spinImages[0]] : [NO_PHOTO]);
   galleryIndex = 0;
   const wrap = $('detGallery');
   if (!wrap) return;
   const many = galleryImages.length > 1;
   const slides = galleryImages.map((src, i) =>
-    `<div class="det-gallery-slide">${isUrl(src) ? `<img src="${esc(src)}" alt="Product photo ${i + 1}"/>` : `<span>${esc(src)}</span>`}</div>`).join('');
+    `<div class="det-gallery-slide">${isUrl(src) ? `<img src="${esc(src)}" alt="Product photo ${i + 1}"/>` : ic('bag', 'ic-ph')}</div>`).join('');
   const arrows = many
-    ? "<button class='gallery-arrow prev' onclick='event.stopPropagation();galleryPrev()'>&#8592;</button>" +
-      "<button class='gallery-arrow next' onclick='event.stopPropagation();galleryNext()'>&#8594;</button>" : '';
+    ? `<button class='gallery-arrow prev' onclick='event.stopPropagation();galleryPrev()' aria-label='Previous photo'>${ic('chev-l')}</button>` +
+      `<button class='gallery-arrow next' onclick='event.stopPropagation();galleryNext()' aria-label='Next photo'>${ic('chev-r')}</button>` : '';
   const count = many ? `<div class='gallery-count'>1 / ${galleryImages.length}</div>` : '';
   const dots = (many && galleryImages.length <= 8)
     ? "<div class='gallery-dots'>" + galleryImages.map((_, i) =>
         `<button class='gallery-dot${i === 0 ? ' active' : ''}' onclick='galleryGoTo(${i})'></button>`).join('') + '</div>' : '';
   const spinPill = p.spinEnabled
-    ? "<button class='spin-pill' onclick='event.stopPropagation();onGalleryClick()'>&#8635; 360&deg; view</button>" : '';
+    ? `<button class='spin-pill' onclick='event.stopPropagation();onGalleryClick()'>${ic('rotate')} 360&deg; view</button>` : '';
   wrap.innerHTML = `<div class='det-gallery-main' onclick='onGalleryClick()' id='galleryMain'>` +
     `<div class='det-gallery-slides' id='gallerySlides'>${slides}</div>${arrows}${count}${spinPill}</div>${dots}`;
 
@@ -720,7 +732,7 @@ function renderLightboxImg(idx) {
   const src = galleryImages[idx];
   return isUrl(src)
     ? `<img src="${esc(src)}" style="max-width:95vw;max-height:80vh;object-fit:contain;border-radius:8px;cursor:grab" draggable="false"/>`
-    : `<span style="font-size:8rem">${esc(src)}</span>`;
+    : ic('bag', 'ic-ph ic-xl');
 }
 function openLightbox(idx) {
   const lb = $('lightbox');
@@ -729,7 +741,7 @@ function openLightbox(idx) {
   $('lbImg').innerHTML = renderLightboxImg(idx);
   const thumbs = $('lbThumbs');
   thumbs.innerHTML = galleryImages.length > 1 ? galleryImages.map((src, i) =>
-    `<div class='lightbox-thumb${i === idx ? ' active' : ''}' onclick='lbGoTo(${i})'>${isUrl(src) ? `<img src="${esc(src)}"/>` : `<span>${esc(src)}</span>`}</div>`).join('') : '';
+    `<div class='lightbox-thumb${i === idx ? ' active' : ''}' onclick='lbGoTo(${i})'>${isUrl(src) ? `<img src="${esc(src)}"/>` : ic('bag')}</div>`).join('') : '';
   updateLightboxCounter(idx);
   lb.classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -808,7 +820,7 @@ function createSpin(stage, frames) {
   loader.textContent = 'Loading 360\u00B0 view\u2026 0%';
   const hint = document.createElement('div');
   hint.className = 'spin-hint';
-  hint.innerHTML = '&#8596; Drag to rotate';
+  hint.innerHTML = ic('arrows-h') + ' Drag to rotate';
   stage.innerHTML = '';
   stage.appendChild(canvas); stage.appendChild(loader); stage.appendChild(hint);
   const ctx = canvas.getContext('2d');
@@ -931,7 +943,7 @@ function spinToPhotos() { closeSpinViewer(); openLightbox(0); }
 function onGalleryClick() {
   if (curProd && curProd.spinEnabled) {
     openSpinViewer(curProd.spinImages, { title: curProd.name, photos: curProd.images.length > 0 });
-  } else openLightbox(galleryIndex);
+  } else if (isUrl(galleryImages[galleryIndex])) openLightbox(galleryIndex);   // nothing to zoom when there is no photo yet
 }
 document.addEventListener('keydown', (e) => {
   const o = $('spinOverlay');
@@ -948,7 +960,7 @@ let currentTheme = 'light';
 try { currentTheme = localStorage.getItem('yk_theme') || 'light'; } catch (e) { /* ignore */ }
 let _slideRunning = false;
 function updateThemeBtn(theme) {
-  document.querySelectorAll('.theme-toggle').forEach((b) => { b.innerHTML = theme === 'dark' ? '&#9728;' : '&#9790;'; });
+  document.querySelectorAll('.theme-toggle').forEach((b) => { b.innerHTML = ic(theme === 'dark' ? 'sun' : 'moon'); b.setAttribute('aria-label', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'); });
 }
 function setTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
@@ -963,7 +975,7 @@ function applyTheme(theme, animate) {
   w.style.cssText = 'position:fixed;top:0;left:0;right:0;height:100vh;z-index:99999;pointer-events:none;overflow:hidden;transform:translateY(-100%);transition:transform 1s cubic-bezier(0.25,0.1,0.1,1)';
   const inner = document.createElement('div');
   inner.style.cssText = `position:absolute;inset:0;background:${theme === 'dark' ? '#080c14' : '#f0f9ff'};display:flex;align-items:center;justify-content:center`;
-  inner.innerHTML = `<div style="font-size:3rem">${theme === 'dark' ? '&#127769;' : '&#9728;'}</div>`;
+  inner.innerHTML = `<div style="font-size:3.5rem;color:${theme === 'dark' ? '#7dd3fc' : '#f59e0b'}">${ic(theme === 'dark' ? 'moon' : 'sun')}</div>`;
   w.appendChild(inner);
   document.body.appendChild(w);
   w.getBoundingClientRect();

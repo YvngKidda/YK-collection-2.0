@@ -9,6 +9,7 @@
 <meta property="og:description" content="Shop premium clothing, shoes and accessories for men and women. Nationwide delivery. Order via WhatsApp."/>
 <meta property="og:type" content="website"/>
 <meta name="twitter:card" content="summary_large_image"/>
+<link rel="icon" href="/favicon.ico" sizes="any"/>
 <link rel="icon" type="image/svg+xml" href="assets/logo-icon.svg"/>
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png"/>
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png"/>
@@ -18,17 +19,56 @@
 <link rel="stylesheet" href="supabase-additions.css"/>
 </head>
 <body>
+<!-- Icon sprite: every icon on the site is drawn from here (works the same on every phone and computer) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+<symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></symbol>
+<symbol id="i-bag" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></symbol>
+<symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></symbol>
+<symbol id="i-truck" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></symbol>
+<symbol id="i-crown" viewBox="0 0 24 24"><path d="M3 7l4.5 4L12 4l4.5 7L21 7l-2 12H5L3 7z"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></symbol>
+<symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+<symbol id="i-check-circle" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M22 6l-10 7L2 6"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+<symbol id="i-smile" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></symbol>
+<symbol id="i-frown" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2M9 9h.01M15 9h.01"/></symbol>
+<symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-rotate" viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></symbol>
+<symbol id="i-package" viewBox="0 0 24 24"><path d="M16.5 9.4L7.5 4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></symbol>
+<symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><path d="M7 7h.01"/></symbol>
+<symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></symbol>
+<symbol id="i-chev-d" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+<symbol id="i-chev-l" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+<symbol id="i-chev-r" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
+<symbol id="i-flame" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.3 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
+<symbol id="i-arrows-h" viewBox="0 0 24 24"><path d="M8 7l-4 5 4 5M16 7l4 5-4 5M4 12h16"/></symbol>
+</svg>
 <nav id="mainNav">
   <div class="nav-logo" onclick="go('shop')"><img class="yk-icon" src="assets/logo-icon.svg" alt="YK Collection" width="44" height="44"/><span class="l2">Collection</span></div>
   <div class="nav-center">
     <button class="nav-link" onclick="go('shop')">Home</button>
-    <div class="nav-dd"><button class="nav-link">Clothing &#9662;</button>
+    <div class="nav-dd"><button class="nav-link">Clothing <svg class="ic ic-chev" aria-hidden="true" focusable="false"><use href="#i-chev-d"/></svg></button>
       <div class="nav-dd-menu"><div class="dd-lbl">Clothing</div>
         <button class="dd-item" onclick="filterGo('clothing-male')">Male</button>
         <button class="dd-item" onclick="filterGo('clothing-female')">Female</button>
       </div>
     </div>
-    <div class="nav-dd"><button class="nav-link">Shoes &#9662;</button>
+    <div class="nav-dd"><button class="nav-link">Shoes <svg class="ic ic-chev" aria-hidden="true" focusable="false"><use href="#i-chev-d"/></svg></button>
       <div class="nav-dd-menu"><div class="dd-lbl">Shoes</div>
         <button class="dd-item" onclick="filterGo('shoes-male')">Male</button>
         <button class="dd-item" onclick="filterGo('shoes-female')">Female</button>
@@ -42,7 +82,7 @@
     <button class="nav-link" onclick="go('feedback')" style="font-size:.82rem">Feedback</button>
   </div>
   <div class="nav-right">
-    <button class="theme-toggle" onclick="toggleTheme()">&#9790;</button>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Switch to dark mode"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-moon"/></svg></button>
     <button class="cart-btn" onclick="toggleCart()">Cart <span class="cart-count" id="cc1">0</span></button>
     <button class="mobile-cart" onclick="toggleCart()">Cart <span class="cart-count" id="cc2">0</span></button>
     <button class="hamburger" id="burger" onclick="toggleMenu()"><span></span><span></span><span></span></button>
@@ -51,7 +91,7 @@
 <div class="mob-menu" id="mobMenu">
   <button class="nav-link" onclick="go('shop');closeMob()">Home</button>
 
-  <div><button class="nav-link" onclick="toggleSub('sm')">Men &#9662;</button>
+  <div><button class="nav-link" onclick="toggleSub('sm')">Men <svg class="ic ic-chev" aria-hidden="true" focusable="false"><use href="#i-chev-d"/></svg></button>
     <div class="mob-sub" id="sm">
       <button class="nav-link" onclick="filterGo('clothing-male');closeMob()">Clothing</button>
       <button class="nav-link" onclick="filterGo('shoes-male');closeMob()">Shoes</button>
@@ -59,7 +99,7 @@
       <button class="nav-link" onclick="filterGo('watches-male');closeMob()">Watches &amp; Accessories</button>
     </div>
   </div>
-  <div><button class="nav-link" onclick="toggleSub('sw')">Women &#9662;</button>
+  <div><button class="nav-link" onclick="toggleSub('sw')">Women <svg class="ic ic-chev" aria-hidden="true" focusable="false"><use href="#i-chev-d"/></svg></button>
     <div class="mob-sub" id="sw">
       <button class="nav-link" onclick="filterGo('clothing-female');closeMob()">Clothing</button>
       <button class="nav-link" onclick="filterGo('shoes-female');closeMob()">Shoes</button>
@@ -74,15 +114,15 @@
 </div>
 <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
 <div class="cart-panel" id="cartPanel">
-  <div class="cart-hdr"><div><h2>Your Cart</h2><div class="cart-hdr-sub" id="cartSubtitle">0 items</div></div><button class="close-cart" onclick="toggleCart()">&#10005;</button></div>
-  <div class="cart-items" id="cartItems"><div class="cart-empty"><div class="cart-empty-icon">&#128722;</div><p>Your cart is empty</p></div></div>
+  <div class="cart-hdr"><div><h2>Your Cart</h2><div class="cart-hdr-sub" id="cartSubtitle">0 items</div></div><button class="close-cart" onclick="toggleCart()" aria-label="Close cart"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button></div>
+  <div class="cart-items" id="cartItems"><div class="cart-empty"><div class="cart-empty-icon"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-cart"/></svg></div><p>Your cart is empty</p></div></div>
   <div class="cart-ftr"><div class="cart-total-row"><span class="cart-total-lbl">Total</span><span class="cart-total-val" id="cartTotal">&#8358;0</span></div><button class="co-btn" onclick="checkout()">Order via WhatsApp</button></div>
 </div>
 <div id="landing" class="page active">
   <canvas id="particleCanvas"></canvas>
   <div class="land-grid"></div><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div>
   <img class="land-logo" src="assets/logo-icon.svg" alt="YK Collection logo" width="88" height="88"/>
-  <div class="land-badge">&#10022; New Collection 2026</div>
+  <div class="land-badge"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-sparkle"/></svg> New Collection 2026</div>
   <h1 class="land-title"><span class="t1">YK</span><span class="t2">Collection</span></h1>
   <p class="land-sub">Premium fashion for those who wear their confidence. Style that speaks before you do.</p>
   <div class="land-actions">
@@ -90,23 +130,23 @@
     <button class="land-btn-sec" onclick="go('about')">Our Story</button>
   </div>
   <div class="land-features">
-    <div class="land-feat"><div class="land-feat-icon">&#128666;</div><div class="land-feat-txt"><div class="land-feat-title">Nationwide Delivery</div><div class="land-feat-sub">We deliver to all 36 states</div></div></div>
-    <div class="land-feat"><div class="land-feat-icon">&#128172;</div><div class="land-feat-txt"><div class="land-feat-title">WhatsApp Orders</div><div class="land-feat-sub">Quick &amp; easy checkout</div></div></div>
-    <div class="land-feat"><div class="land-feat-icon">&#10024;</div><div class="land-feat-txt"><div class="land-feat-title">Premium Quality</div><div class="land-feat-sub">Handpicked every piece</div></div></div>
-    <div class="land-feat"><div class="land-feat-icon">&#128081;</div><div class="land-feat-txt"><div class="land-feat-title">Men &amp; Women</div><div class="land-feat-sub">Clothing &amp; footwear</div></div></div>
+    <div class="land-feat"><div class="land-feat-icon"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-truck"/></svg></div><div class="land-feat-txt"><div class="land-feat-title">Nationwide Delivery</div><div class="land-feat-sub">We deliver to all 36 states</div></div></div>
+    <div class="land-feat"><div class="land-feat-icon"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chat"/></svg></div><div class="land-feat-txt"><div class="land-feat-title">WhatsApp Orders</div><div class="land-feat-sub">Quick &amp; easy checkout</div></div></div>
+    <div class="land-feat"><div class="land-feat-icon"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-sparkle"/></svg></div><div class="land-feat-txt"><div class="land-feat-title">Premium Quality</div><div class="land-feat-sub">Handpicked every piece</div></div></div>
+    <div class="land-feat"><div class="land-feat-icon"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-crown"/></svg></div><div class="land-feat-txt"><div class="land-feat-title">Men &amp; Women</div><div class="land-feat-sub">Clothing &amp; footwear</div></div></div>
   </div>
 </div>
 <div id="shop" class="page">
   <div class="shop-hero"><h1 class="reveal">Our <span>Collection</span></h1><p class="reveal">Handpicked styles for every occasion</p></div>
   <div class="search-wrap">
-    <span class="search-icon">&#128269;</span>
+    <span class="search-icon"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-search"/></svg></span>
     <input class="search-box" id="searchBox" placeholder="Search products, categories, colors..." oninput="handleSearch()"/>
-    <button class="search-clear" id="searchClear" onclick="clearSearch()">&#10005;</button>
+    <button class="search-clear" id="searchClear" onclick="clearSearch()" aria-label="Clear search"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
   </div>
   <div class="shop-body">
     <div class="shop-filter-bar" id="shopFilterBar"></div>
     <div class="shop-toolbar">
-      <button class="tb-btn" id="filterToggle" onclick="toggleFilterPanel()" aria-expanded="false">&#9881; Filters <span class="tb-badge" id="filterBadge" style="display:none"></span></button>
+      <button class="tb-btn" id="filterToggle" onclick="toggleFilterPanel()" aria-expanded="false"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-sliders"/></svg> Filters <span class="tb-badge" id="filterBadge" style="display:none"></span></button>
       <label class="tb-sort"><span>Sort</span>
         <select id="sortSelect" onchange="onSortChange()">
           <option value="newest">Newest</option>
@@ -133,10 +173,10 @@
     <div class="prod-grid" id="prodGrid"></div>
   </div>
   <div class="newsletter-section">
-    <div class="newsletter-icon">&#128172;</div>
+    <div class="newsletter-icon"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chat"/></svg></div>
     <div class="newsletter-title">Join Our WhatsApp List</div>
     <p class="newsletter-sub">Be the first to know about new arrivals, exclusive deals, and special offers. Join our WhatsApp update list today!</p>
-    <button class="newsletter-btn" onclick="joinWhatsApp()">&#128172; Join on WhatsApp</button>
+    <button class="newsletter-btn" onclick="joinWhatsApp()"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chat"/></svg> Join on WhatsApp</button>
   </div>
 </div>
 <div id="product-detail" class="page">
@@ -151,12 +191,12 @@
         <div class="low-stock-pill" id="detStock" style="display:none"></div>
                <div class="sec-lbl">Select Size</div>
         <div class="sizes" id="sizesWrap"></div>
-        <div class="ship-box"><span style="font-size:1.4rem">&#128666;</span><div><div class="ship-txt">Nationwide Delivery &#9989;</div><div class="ship-sub">We deliver to all states in Nigeria</div></div></div>
+        <div class="ship-box"><span style="font-size:1.4rem;display:inline-flex"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-truck"/></svg></span><div><div class="ship-txt">Nationwide Delivery <svg class="ic ic-ok" aria-hidden="true" focusable="false"><use href="#i-check-circle"/></svg></div><div class="ship-sub">We deliver to all states in Nigeria</div></div></div>
         <div class="det-actions">
-          <button class="buy-now-btn" onclick="buyNow()">&#128172; Buy Now</button>
-          <button class="atc-btn" onclick="addFromDetail()">&#128722; Add to Cart</button>
+          <button class="buy-now-btn" onclick="buyNow()"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chat"/></svg> Buy Now</button>
+          <button class="atc-btn" onclick="addFromDetail()"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-cart"/></svg> Add to Cart</button>
         </div>
-        <button class="share-btn" onclick="shareProduct()">&#128279; Share this product</button>
+        <button class="share-btn" onclick="shareProduct()"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-link"/></svg> Share this product</button>
         <div class="det-meta" id="detMeta"></div>
         <div class="det-desc"><div class="det-desc-lbl">Description</div><div class="det-desc-txt" id="detDesc"></div></div>
         <div class="reviews-section" id="detReviewsSection"><div class="reviews-hdr"><div class="reviews-title">Customer Reviews</div><button class="add-review-btn" onclick="openReviewForm()">+ Write a Review</button></div><div class="reviews-summary" id="reviewsSummary" style="display:none"></div><div class="review-form" id="reviewForm"><div class="review-stars-pick" id="starPicker"><span class="star-pick" onmouseover="hoverStar(1)" onmouseout="unhoverStar()" onclick="updateStarPicker(1)">&#9733;</span><span class="star-pick" onmouseover="hoverStar(2)" onmouseout="unhoverStar()" onclick="updateStarPicker(2)">&#9733;</span><span class="star-pick" onmouseover="hoverStar(3)" onmouseout="unhoverStar()" onclick="updateStarPicker(3)">&#9733;</span><span class="star-pick" onmouseover="hoverStar(4)" onmouseout="unhoverStar()" onclick="updateStarPicker(4)">&#9733;</span><span class="star-pick" onmouseover="hoverStar(5)" onmouseout="unhoverStar()" onclick="updateStarPicker(5)">&#9733;</span></div><input class="review-f-inp" id="reviewName" placeholder="Your name" maxlength="60"/><textarea class="review-f-ta" id="reviewText" placeholder="Write your review (optional)..." maxlength="1000"></textarea><div style="display:flex;gap:.75rem"><button class="review-submit-btn" onclick="submitReview(this)">Submit Review</button><button class="review-submit-btn" style="background:var(--text3)" onclick="closeReviewForm()">Cancel</button></div></div><div id="reviewsList"><div class="no-reviews">No reviews yet. Be the first!</div></div></div>
@@ -168,7 +208,7 @@
   <div class="inner">
     <div class="pg-hdr reveal"><div class="pg-eyebrow">Our Story</div><h1 class="pg-title">About <span>YK Collection</span></h1><p class="pg-sub">Our values, our vision, our promise to you</p></div>
     <div class="about-grid">
-      <div class="about-img reveal" style="font-size:6rem">&#128247;</div>
+      <div class="about-img reveal" style="font-size:6rem"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-camera"/></svg></div>
       <div class="about-txt reveal">
         <h2>We Dress You With Confidence</h2>
         <p>YK Collection was born from a simple belief - everyone deserves to look and feel extraordinary. We curate premium clothing and footwear that blends style, comfort, and quality.</p>
@@ -177,13 +217,13 @@
       </div>
     </div>
     <div class="vals">
-      <div class="val-card" style="animation-delay:.05s"><div class="val-icon">&#10024;</div><div class="val-ttl">Premium Quality</div><p class="val-txt">Every piece selected for quality, durability, and style. We never compromise.</p></div>
-      <div class="val-card" style="animation-delay:.15s"><div class="val-icon">&#128666;</div><div class="val-ttl">Nationwide Delivery</div><p class="val-txt">We deliver to every state in Nigeria. Fast, reliable, right to your doorstep.</p></div>
-      <div class="val-card" style="animation-delay:.25s"><div class="val-icon">&#128172;</div><div class="val-ttl">Personal Service</div><p class="val-txt">Order via WhatsApp for a personal shopping experience like no other.</p></div>
+      <div class="val-card" style="animation-delay:.05s"><div class="val-icon"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-sparkle"/></svg></div><div class="val-ttl">Premium Quality</div><p class="val-txt">Every piece selected for quality, durability, and style. We never compromise.</p></div>
+      <div class="val-card" style="animation-delay:.15s"><div class="val-icon"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-truck"/></svg></div><div class="val-ttl">Nationwide Delivery</div><p class="val-txt">We deliver to every state in Nigeria. Fast, reliable, right to your doorstep.</p></div>
+      <div class="val-card" style="animation-delay:.25s"><div class="val-icon"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chat"/></svg></div><div class="val-ttl">Personal Service</div><p class="val-txt">Order via WhatsApp for a personal shopping experience like no other.</p></div>
     </div>
   
     <div class="disclaimer-section">
-      <div class="disclaimer-title">&#9432; Legal Disclaimer &amp; Disclosure</div>
+      <div class="disclaimer-title"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-info"/></svg> Legal Disclaimer &amp; Disclosure</div>
       <div class="disclaimer-text">
         <p>YK Collection is an independent retail business. We are not affiliated with, endorsed by, sponsored by, or in any way officially connected to any of the brands, designers, or manufacturers whose products may appear on this platform.</p>
         <p>All brand names, trademarks, logos, and product names referenced on this website are the property of their respective owners and are used solely for descriptive and identification purposes. Their use does not imply any affiliation with or endorsement by those brand owners.</p>
@@ -201,9 +241,9 @@
       <div class="contact-info reveal">
         <h2>Let's Talk</h2>
         <p>Question about sizing, delivery, or a product? Send us a message and we will get back to you quickly.</p>
-        <div class="ci-item"><div class="ci-icon">&#128172;</div><div><div class="ci-lbl">WhatsApp</div><div class="ci-val">+234 901 422 3167</div></div></div>
-        <div class="ci-item"><div class="ci-icon">&#128140;</div><div><div class="ci-lbl">Email</div><div class="ci-val"><a href="mailto:hello@ykcollection.com">hello@ykcollection.com</a></div></div></div>
-        <div class="ci-item"><div class="ci-icon">&#9200;</div><div><div class="ci-lbl">Hours</div><div class="ci-val">Mon-Sat: 8am - 8pm WAT</div></div></div>
+        <div class="ci-item"><div class="ci-icon"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chat"/></svg></div><div><div class="ci-lbl">WhatsApp</div><div class="ci-val">+234 901 422 3167</div></div></div>
+        <div class="ci-item"><div class="ci-icon"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-mail"/></svg></div><div><div class="ci-lbl">Email</div><div class="ci-val"><a href="mailto:hello@ykcollection.com">hello@ykcollection.com</a></div></div></div>
+        <div class="ci-item"><div class="ci-icon"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-clock"/></svg></div><div><div class="ci-lbl">Hours</div><div class="ci-val">Mon-Sat: 8am - 8pm WAT</div></div></div>
       </div>
       <div class="cf reveal">
         <div id="cfWrap">
@@ -215,7 +255,7 @@
           <div class="f-grp"><label class="f-lbl">Message</label><textarea class="f-ta" id="ms" placeholder="How can we help?"></textarea></div>
           <button class="sub-btn" onclick="submitForm(this)">Send Message</button>
         </div>
-        <div class="form-ok" id="fOk"><div class="form-ok-ic">&#127881;</div><h3>Message Sent!</h3><p>We will get back to you within a few hours.</p></div>
+        <div class="form-ok" id="fOk"><div class="form-ok-ic"><svg class="ic ic-ok" aria-hidden="true" focusable="false"><use href="#i-check-circle"/></svg></div><h3>Message Sent!</h3><p>We will get back to you within a few hours.</p></div>
       </div>
     </div>
   </div>
@@ -226,9 +266,9 @@
     <div class="comp-card reveal">
       <div class="comp-title">What would you like to share?</div>
       <div class="comp-type-tabs">
-        <button class="comp-tab active" onclick="setCompType('complaint',this)">&#128532; Complaint</button>
-        <button class="comp-tab" onclick="setCompType('suggestion',this)">&#128161; Suggestion</button>
-        <button class="comp-tab" onclick="setCompType('compliment',this)">&#127881; Compliment</button>
+        <button class="comp-tab active" onclick="setCompType('complaint',this)"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-frown"/></svg> Complaint</button>
+        <button class="comp-tab" onclick="setCompType('suggestion',this)"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-bulb"/></svg> Suggestion</button>
+        <button class="comp-tab" onclick="setCompType('compliment',this)"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-smile"/></svg> Compliment</button>
       </div>
       <div id="compFormWrap">
         <div class="comp-f-grp"><label class="comp-f-lbl">Your Name</label><input class="comp-f-inp" id="compName" placeholder="Enter your name" maxlength="80"/></div>
@@ -236,7 +276,7 @@
         <button class="comp-submit-btn" onclick="submitComplaint(this)">Send Message &#8594;</button>
       </div>
       <div class="comp-ok" id="compOk">
-        <div class="comp-ok-ic">&#127881;</div>
+        <div class="comp-ok-ic"><svg class="ic ic-ok" aria-hidden="true" focusable="false"><use href="#i-check-circle"/></svg></div>
         <h3>Thank You!</h3>
         <p>Your message has been received. We truly appreciate your feedback.</p>
         <button class="comp-submit-btn" style="margin-top:1rem" onclick="resetCompForm()">Send Another</button>
@@ -254,10 +294,10 @@
   </div>
 </footer>
 <div class="toast" id="toast"></div>
-<div class="wa-float" id="waFloat"><button class="wa-float-btn" onclick="window.open('https://wa.me/2349014223167','_blank')">&#128172;<div class="wa-float-tooltip">Chat with us</div></button></div>
+<div class="wa-float" id="waFloat"><button class="wa-float-btn" onclick="window.open('https://wa.me/2349014223167','_blank')" aria-label="Chat on WhatsApp"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chat"/></svg><div class="wa-float-tooltip">Chat with us</div></button></div>
 <div class="admin-overlay" id="adminOverlay">
   <div class="admin-login-box">
-    <div class="admin-login-icon">&#128274;</div>
+    <div class="admin-login-icon"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-lock"/></svg></div>
     <h2 class="admin-login-title">Admin Login</h2>
     <p class="admin-login-sub">Sign in with your admin account</p>
     <input class="admin-pass-inp" type="email" id="adminEmailInput" placeholder="Email" autocomplete="username" autocapitalize="none" autocorrect="off" inputmode="email"/>
@@ -269,7 +309,7 @@
 </div>
 <div class="edit-modal-overlay" id="editModalOverlay">
   <div class="edit-modal">
-    <div class="edit-modal-hdr"><div class="edit-modal-title">&#9998; Edit Product</div><button class="edit-modal-close" onclick="closeEditModal()">&#10005;</button></div>
+    <div class="edit-modal-hdr"><div class="edit-modal-title"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-edit"/></svg> Edit Product</div><button class="edit-modal-close" onclick="closeEditModal()" aria-label="Close"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button></div>
     <div class="admin-form-grid">
       <div class="admin-f-grp"><label class="admin-f-lbl">Product Name *</label><input class="admin-f-inp" id="eName"/></div>
       <div class="admin-f-grp"><label class="admin-f-lbl">Category *</label><select class="admin-f-inp" id="eCat"><option value="clothing-male">Male Clothing</option><option value="clothing-female">Female Clothing</option><option value="shoes-male">Male Shoes</option><option value="shoes-female">Female Shoes</option><option value="bags-male">Male Bags</option><option value="watches-male">Male Watches</option><option value="watches-female">Female Watches</option><option value="jewelry-female">Female Jewelry</option>
@@ -278,40 +318,39 @@
       <div class="admin-f-grp"><label class="admin-f-lbl">Old Price (&#8358;)</label><input class="admin-f-inp" type="number" id="eOldPrice"/></div>
       <div class="admin-f-grp"><label class="admin-f-lbl">Stock (units in hand) *</label><input class="admin-f-inp" type="number" min="0" id="eStock"/></div>
       <div class="admin-f-grp"><label class="admin-f-lbl">Badge</label><select class="admin-f-inp" id="eBadge"><option value="">None</option><option value="new">NEW</option><option value="sale">SALE</option><option value="limited">LIMITED</option></select></div>
-      <div class="admin-f-grp"><label class="admin-f-lbl">Sizes * (comma separated)</label><input class="admin-f-inp" id="eSizes" placeholder="e.g. S, M, L+1000, XL+2000"/><div class="admin-gallery-hint">Add <b>+amount</b> after a size to charge more for it: <b>L+1000</b> means L costs &#8358;1,000 extra. No +amount = normal price.</div></div>
+      <div class="admin-f-grp"><label class="admin-f-lbl">Sizes * (comma separated)</label><input class="admin-f-inp" id="eSizes" placeholder="e.g. S, M, L, XL"/><div class="admin-gallery-hint">Separate sizes with commas. Number sizes work too (40, 41, 42). On the product page the photo grows slightly for each bigger size (M = normal size).</div></div>
       <div class="admin-f-grp"><label class="admin-f-lbl">Color</label><input class="admin-f-inp" id="eColor"/></div>
       <div class="admin-f-grp"><label class="admin-f-lbl">Material</label><input class="admin-f-inp" id="eMaterial"/></div>
-      <div class="admin-f-grp"><label class="admin-f-lbl">Emoji</label><input class="admin-f-inp" id="eEmoji"/></div>
       <div class="admin-f-grp" style="grid-column:1/-1"><label class="admin-f-lbl">Product Photos</label>
           <div class="img-strip" id="eImgStrip"></div>
           <!-- accept="image/*" + multiple opens the phone's photo gallery. Do NOT add capture="" (that forces the camera). -->
           <input type="file" id="ePhotoInput" accept="image/*" multiple hidden onchange="handlePhotoPick(this,'edit')">
-          <label for="ePhotoInput" class="photo-pick-btn">&#128247; Choose photos from gallery</label>
+          <label for="ePhotoInput" class="photo-pick-btn"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-camera"/></svg> Choose photos from gallery</label>
           <div class="admin-gallery-hint">Pick one or many. The first photo is the cover &mdash; tap &#9733; Cover on another photo to change it.</div></div>
         <div class="admin-f-grp" style="grid-column:1/-1"><label class="admin-f-lbl">360&deg; View (optional)</label>
           <label class="spin-toggle"><input type="checkbox" id="eSpinOn"/> Turn on 360&deg; view for this product</label>
           <div class="img-strip spin-strip" id="eSpinStrip"></div>
           <div class="spin-count" id="eSpinCount">No frames yet</div>
           <input type="file" id="eSpinInput" accept="image/*" multiple hidden onchange="handleSpinPick(this,'edit')">
-          <label for="eSpinInput" class="photo-pick-btn">&#128260; Add 360&deg; frames from gallery</label>
-          <div class="spin-tools"><button type="button" onclick="previewSpin('edit')">&#9654; Preview</button><button type="button" onclick="reverseSpin('edit')">&#8644; Reverse</button><button type="button" onclick="clearSpin('edit')">&#10005; Clear all</button></div>
+          <label for="eSpinInput" class="photo-pick-btn"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-rotate"/></svg> Add 360&deg; frames from gallery</label>
+          <div class="spin-tools"><button type="button" onclick="previewSpin('edit')"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-play"/></svg> Preview</button><button type="button" onclick="reverseSpin('edit')"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-arrows-h"/></svg> Reverse</button><button type="button" onclick="clearSpin('edit')"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-x"/></svg> Clear all</button></div>
           <div class="admin-gallery-hint">Take 12&ndash;24 photos while turning the item one full circle (same distance, plain background). Pick them all at once &mdash; they&rsquo;re ordered by file name. If it spins the wrong way, tap Reverse.</div></div>
     </div>
     <div class="admin-f-grp" style="margin-top:.5rem"><label class="admin-f-lbl">Product Description</label><textarea class="admin-f-inp" id="eDesc" style="height:80px;resize:none"></textarea></div>
-    <button class="edit-save-btn" onclick="saveEditProduct(this)">&#10003; Save Changes</button>
+    <button class="edit-save-btn" onclick="saveEditProduct(this)"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-check"/></svg> Save Changes</button>
   </div>
 </div>
 <div id="admin" class="page">
   <div class="admin-inner">
     <div class="admin-hdr">
-      <div><div class="admin-eyebrow">&#128274; Admin Panel</div><h1 class="admin-title">Manage Store</h1></div>
+      <div><div class="admin-eyebrow"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-lock"/></svg> Admin Panel</div><h1 class="admin-title">Manage Store</h1></div>
       <div class="admin-hdr-btns">
-        <button class="admin-view-btn" onclick="go('shop')">&#128065; View Store</button>
+        <button class="admin-view-btn" onclick="go('shop')"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-eye"/></svg> View Store</button>
         <button class="admin-logout-btn" onclick="logoutAdmin()">Logout</button>
       </div>
     </div>
     <div class="admin-form-card">
-      <h2 class="admin-section-title">&#10133; Add New Product</h2>
+      <h2 class="admin-section-title"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-plus"/></svg> Add New Product</h2>
       <div class="admin-form-grid">
         <div class="admin-f-grp"><label class="admin-f-lbl">Product Name *</label><input class="admin-f-inp" id="aName" placeholder="e.g. Classic White Polo"/></div>
         <div class="admin-f-grp"><label class="admin-f-lbl">Category *</label><select class="admin-f-inp" id="aCat"><option value="clothing-male">Male Clothing</option><option value="clothing-female">Female Clothing</option><option value="shoes-male">Male Shoes</option><option value="shoes-female">Female Shoes</option><option value="bags-male">Male Bags</option><option value="watches-male">Male Watches</option><option value="watches-female">Female Watches</option><option value="jewelry-female">Female Jewelry</option>
@@ -320,65 +359,64 @@
         <div class="admin-f-grp"><label class="admin-f-lbl">Old Price (&#8358;)</label><input class="admin-f-inp" type="number" id="aOldPrice" placeholder="e.g. 20000"/></div>
         <div class="admin-f-grp"><label class="admin-f-lbl">Stock (units in hand) *</label><input class="admin-f-inp" type="number" min="0" id="aStock" value="1"/></div>
         <div class="admin-f-grp"><label class="admin-f-lbl">Badge</label><select class="admin-f-inp" id="aBadge"><option value="">None</option><option value="new">NEW</option><option value="sale">SALE</option><option value="limited">LIMITED</option></select></div>
-        <div class="admin-f-grp"><label class="admin-f-lbl">Sizes * (comma separated)</label><input class="admin-f-inp" id="aSizes" placeholder="e.g. S, M, L+1000, XL+2000"/><div class="admin-gallery-hint">Add <b>+amount</b> after a size to charge more for it: <b>L+1000</b> means L costs &#8358;1,000 extra. No +amount = normal price.</div></div>
+        <div class="admin-f-grp"><label class="admin-f-lbl">Sizes * (comma separated)</label><input class="admin-f-inp" id="aSizes" placeholder="e.g. S, M, L, XL"/><div class="admin-gallery-hint">Separate sizes with commas. Number sizes work too (40, 41, 42). On the product page the photo grows slightly for each bigger size (M = normal size).</div></div>
         <div class="admin-f-grp"><label class="admin-f-lbl">Color</label><input class="admin-f-inp" id="aColor" placeholder="e.g. Black"/></div>
         <div class="admin-f-grp"><label class="admin-f-lbl">Material</label><input class="admin-f-inp" id="aMaterial" placeholder="e.g. Cotton"/></div>
-        <div class="admin-f-grp"><label class="admin-f-lbl">Emoji</label><input class="admin-f-inp" id="aEmoji" placeholder="e.g. &#128085;"/></div>
         <div class="admin-f-grp" style="grid-column:1/-1"><label class="admin-f-lbl">Product Photos</label>
           <div class="img-strip" id="aImgStrip"></div>
           <!-- accept="image/*" + multiple opens the phone's photo gallery. Do NOT add capture="" (that forces the camera). -->
           <input type="file" id="aPhotoInput" accept="image/*" multiple hidden onchange="handlePhotoPick(this,'add')">
-          <label for="aPhotoInput" class="photo-pick-btn">&#128247; Choose photos from gallery</label>
+          <label for="aPhotoInput" class="photo-pick-btn"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-camera"/></svg> Choose photos from gallery</label>
           <div class="admin-gallery-hint">Pick one or many. The first photo is the cover &mdash; tap &#9733; Cover on another photo to change it.</div></div>
         <div class="admin-f-grp" style="grid-column:1/-1"><label class="admin-f-lbl">360&deg; View (optional)</label>
           <label class="spin-toggle"><input type="checkbox" id="aSpinOn"/> Turn on 360&deg; view for this product</label>
           <div class="img-strip spin-strip" id="aSpinStrip"></div>
           <div class="spin-count" id="aSpinCount">No frames yet</div>
           <input type="file" id="aSpinInput" accept="image/*" multiple hidden onchange="handleSpinPick(this,'add')">
-          <label for="aSpinInput" class="photo-pick-btn">&#128260; Add 360&deg; frames from gallery</label>
-          <div class="spin-tools"><button type="button" onclick="previewSpin('add')">&#9654; Preview</button><button type="button" onclick="reverseSpin('add')">&#8644; Reverse</button><button type="button" onclick="clearSpin('add')">&#10005; Clear all</button></div>
+          <label for="aSpinInput" class="photo-pick-btn"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-rotate"/></svg> Add 360&deg; frames from gallery</label>
+          <div class="spin-tools"><button type="button" onclick="previewSpin('add')"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-play"/></svg> Preview</button><button type="button" onclick="reverseSpin('add')"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-arrows-h"/></svg> Reverse</button><button type="button" onclick="clearSpin('add')"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-x"/></svg> Clear all</button></div>
           <div class="admin-gallery-hint">Take 12&ndash;24 photos while turning the item one full circle (same distance, plain background). Pick them all at once &mdash; they&rsquo;re ordered by file name. If it spins the wrong way, tap Reverse.</div></div>
       </div>
       <div class="admin-f-grp"><label class="admin-f-lbl">Product Description</label><textarea class="admin-f-inp" id="aDesc" style="height:80px;resize:none" placeholder="Describe this product..."></textarea></div>
       <div class="admin-form-actions" style="margin-top:1rem">
-        <button class="admin-add-btn" onclick="addAdminProduct(this)">&#10133; Add Product</button>
-        <button class="admin-clear-btn" onclick="clearAdminForm()">&#10006; Clear</button>
+        <button class="admin-add-btn" onclick="addAdminProduct(this)"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-plus"/></svg> Add Product</button>
+        <button class="admin-clear-btn" onclick="clearAdminForm()"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-x"/></svg> Clear</button>
       </div>
     </div>
     <div class="admin-list-card">
-      <h2 class="admin-section-title">&#128230; Current Products</h2>
+      <h2 class="admin-section-title"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-package"/></svg> Current Products</h2>
       <div id="adminProdList"></div>
     </div>
     <div class="admin-list-card" style="margin-top:1.5rem">
-      <h2 class="admin-section-title">&#127991; Manage Categories</h2>
+      <h2 class="admin-section-title"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-tag"/></svg> Manage Categories</h2>
       <div id="adminCatManager"></div>
     </div>
     <div class="admin-list-card" style="margin-top:1.5rem">
-      <h2 class="admin-section-title">&#128172; Customer Feedback</h2>
+      <h2 class="admin-section-title"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chat"/></svg> Customer Feedback</h2>
       <div id="adminCompList"><div class="admin-no-comp">No messages yet from customers.</div></div>
     </div>
   </div>
 </div>
 
 <div class="lightbox" id="lightbox">
-  <button class="lightbox-close" onclick="closeLightbox()">&#10005;</button>
-  <button class="lightbox-arrow prev" onclick="lbPrev()">&#8592;</button>
+  <button class="lightbox-close" onclick="closeLightbox()" aria-label="Close"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
+  <button class="lightbox-arrow prev" onclick="lbPrev()" aria-label="Previous photo"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chev-l"/></svg></button>
   <div class="lightbox-img-wrap" id="lbImgWrap">
     <div class="lightbox-img" id="lbImg"></div>
   </div>
-  <button class="lightbox-arrow next" onclick="lbNext()">&#8594;</button>
+  <button class="lightbox-arrow next" onclick="lbNext()" aria-label="Next photo"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chev-r"/></svg></button>
   <div class="lightbox-thumbs" id="lbThumbs"></div>
   <div class="lightbox-counter" id="lbCounter"></div>
   <div class="lightbox-zoom-hint" id="lbZoomHint">Pinch or scroll to zoom</div>
 </div>
 <div class="spin-overlay" id="spinOverlay">
-  <button class="spin-close" onclick="closeSpinViewer()" aria-label="Close">&#10005;</button>
+  <button class="spin-close" onclick="closeSpinViewer()" aria-label="Close"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
   <div class="spin-title" id="spinTitle"></div>
   <div class="spin-stage" id="spinStage"></div>
   <div class="spin-controls">
-    <button onclick="spinStep(-1)" aria-label="Rotate left">&#8592;</button>
-    <button class="spin-photos-btn" id="spinPhotosBtn" onclick="spinToPhotos()" style="display:none">&#128247; Photos</button>
-    <button onclick="spinStep(1)" aria-label="Rotate right">&#8594;</button>
+    <button onclick="spinStep(-1)" aria-label="Rotate left"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chev-l"/></svg></button>
+    <button class="spin-photos-btn" id="spinPhotosBtn" onclick="spinToPhotos()" style="display:none"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-camera"/></svg> Photos</button>
+    <button onclick="spinStep(1)" aria-label="Rotate right"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-chev-r"/></svg></button>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
