@@ -127,3 +127,6 @@
 .search-icon,.search-clear{top:calc(50% + .75rem)}          /* the search box has padding on top only, so "50%" sat too high */
 @media(max-width:768px){.search-icon,.search-clear{top:calc(50% + .5rem)}}
 .ship-box .ic{color:var(--green)}
+
+/* dark mode: remove the pale "white orb" glow behind the landing text */
+[data-theme="dark"] .orb3{display:none}
