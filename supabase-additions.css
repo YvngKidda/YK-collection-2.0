@@ -129,4 +129,4 @@
 .ship-box .ic{color:var(--green)}
 
 /* dark mode: remove the pale "white orb" glow behind the landing text */
-[data-theme="dark"] .orb3{display:none}
+[data-theme="dark"] .orb3{display:none!important}
