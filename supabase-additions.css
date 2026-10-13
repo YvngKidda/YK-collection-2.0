@@ -130,3 +130,64 @@
 
 /* dark mode: remove the pale "white orb" glow behind the landing text */
 [data-theme="dark"] .orb3{display:none!important}
+
+/* ══ UPDATE 4: fluid layout + smoother scrolling ══ */
+
+/* Page changes: quick fade-out, then the new page glides in (works with display:none -> block, unlike a plain transition) */
+.page.active{animation:pageIn .42s cubic-bezier(.22,.8,.3,1) both}
+.page.leaving{animation:pageOut .15s ease-in forwards}
+@keyframes pageIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes pageOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-10px)}}
+
+/* Product photo height follows the screen. (The old rule was stuck at 420px everywhere because the fixed height
+   was declared after the phone rules.) */
+.det-gallery{--gal-h:clamp(340px,40vw,520px)}
+@media(max-width:768px){.det-gallery{--gal-h:clamp(280px,min(92vw,72vh),520px)}}
+@media(max-height:520px) and (orientation:landscape){.det-gallery{--gal-h:clamp(200px,72vh,360px)}}
+.det-gallery-main,.det-gallery-slides,.det-gallery-slide,.det-gallery-slide img{height:var(--gal-h)}
+.det-gallery-main{touch-action:pan-y pinch-zoom}
+
+/* Product cards fade and rise as they scroll into view (script.js adds .in). translate is separate from transform,
+   so the hover lift still works. Browsers without it simply fade. */
+.prod-card{animation:none;transition:opacity .55s ease,translate .55s cubic-bezier(.22,.8,.3,1),transform .35s cubic-bezier(.4,0,.2,1),box-shadow .35s,border-color .35s}
+.prod-card:not(.in){opacity:0;translate:0 26px}
+.prod-card.in{opacity:1;translate:0 0}
+.prod-card{transform-style:flat;perspective:none}   /* the 3D setting made every card a heavy separate layer */
+
+/* Less paint work while scrolling on phones */
+nav,.mob-menu{backdrop-filter:none;-webkit-backdrop-filter:none}   /* the bar is ~96% solid, so the blur showed nothing but repainted every frame */
+@media(max-width:768px){.land-feat,.land-btn-sec{backdrop-filter:none;-webkit-backdrop-filter:none}}
+.shop-filter-inner,.sizes,.lightbox-thumbs,.img-strip,.size-chips{overscroll-behavior-x:contain}
+@media(hover:none){.prod-card:hover{transform:none}.prod-card:hover .prod-thumb img{transform:none!important}}
+
+/* Wider screens use the room; phones keep their padding */
+.shop-body{padding-inline:clamp(1rem,3.2vw,3rem)}
+@media(min-width:1500px){.shop-body{max-width:1500px}.det-inner{max-width:1200px}}
+@media(min-width:2000px){.shop-body{max-width:1800px}.det-inner{max-width:1300px}}
+
+@media(prefers-reduced-motion:reduce){
+  .page.active,.page.leaving{animation:none}
+  .prod-card:not(.in){translate:none}
+  html{scroll-behavior:auto}
+}
+
+/* ══ UPDATE 5: particles across the whole welcome screen + feature cards on one line ══ */
+/* The canvas used to stay at the browser's default 300x150 size (top corner only). Now it fills the whole landing page. */
+#particleCanvas{width:100%;height:100%;display:block}
+
+/* Landing feature cards: one row on computers, 2x2 on tablets, stacked on phones (phones keep the rules in styles.css) */
+@media(min-width:1000px){
+  .land-features{flex-wrap:nowrap;max-width:min(1100px,100%);width:auto}
+  .land-feat{flex:0 1 auto;min-width:0}
+  .land-feat-title,.land-feat-sub{white-space:nowrap}
+}
+@media(min-width:769px) and (max-width:999px){
+  .land-features{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:min(560px,100%);max-width:none}
+  .land-feat{width:auto;max-width:none}
+}
+
+/* ══ UPDATE 6: free scrolling on phones ══ */
+/* No pull-down-to-refresh / rubber-band at the top of the page (script.js covers iPhone browsers too) */
+html,body{overscroll-behavior-y:none}
+/* Floating background glows keep repainting a huge blurred layer: still on phones and touch screens */
+@media(max-width:768px),(hover:none){.orb{animation:none}}

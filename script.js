@@ -168,18 +168,12 @@ function go(name) {
   if (name !== 'product-detail') clearProductUrl();
   const show = () => {
     next.classList.add('active');
-    window.scrollTo(0, 0);
-    setTimeout(() => runReveal(next), 50);
+    jumpToTop();
+    runReveal(next);
   };
   if (cur) {
-    cur.style.opacity = '0';
-    cur.style.transform = 'translateY(-15px)';
-    setTimeout(() => {
-      cur.classList.remove('active');
-      cur.style.opacity = '';
-      cur.style.transform = '';
-      show();
-    }, 300);
+    cur.classList.add('leaving');                 // quick fade-out (CSS), then the new page glides in
+    setTimeout(() => { cur.classList.remove('active', 'leaving'); show(); }, 150);
   } else show();
   const land = name === 'landing';
   $('mainNav').classList.toggle('visible', !land);
@@ -187,19 +181,59 @@ function go(name) {
   setTimeout(() => { const w = $('waFloat'); if (w) w.classList.toggle('visible', !land); }, 350);
   closeMob();
 }
+// Jump to the top instantly (the page's CSS smooth-scroll would otherwise glide up while the new page fades in)
+function jumpToTop() {
+  const root = document.documentElement;
+  root.style.scrollBehavior = 'auto';
+  window.scrollTo(0, 0);
+  root.style.scrollBehavior = '';
+}
+
+/* ── scroll-triggered reveals: things fade/slide in as they scroll into view ── */
+const reducedMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+// makeRevealer(show) -> function(els): calls show(el) for each element as it scrolls into view
+function makeRevealer(show) {
+  let io = null;
+  const fn = (els) => {
+    els = Array.from(els);
+    if (!els.length) return;
+    if (!('IntersectionObserver' in window) || reducedMotion()) { els.forEach(show); return; }
+    if (!io) {
+      io = new IntersectionObserver((entries) => {
+        let n = 0;                                  // items that appear together get a small stagger
+        entries.forEach((en) => {
+          if (!en.isIntersecting) return;
+          io.unobserve(en.target);
+          const el = en.target;
+          setTimeout(() => show(el), Math.min(n++, 5) * 70);
+        });
+      }, { rootMargin: '0px 0px -6% 0px', threshold: 0.06 });
+    }
+    els.forEach((el) => io.observe(el));
+  };
+  fn.reset = () => { if (io) io.disconnect(); };
+  return fn;
+}
+const revealOnScroll = makeRevealer((el) => el.classList.add('shown'));
+const revealCards = makeRevealer((el) => el.classList.add('in'));
 function runReveal(container) {
-  (container || document).querySelectorAll('.reveal').forEach((el, i) => {
-    el.classList.remove('shown');
-    setTimeout(() => el.classList.add('shown'), 80 + i * 90);
-  });
+  const els = Array.from((container || document).querySelectorAll('.reveal'));
+  els.forEach((el) => el.classList.remove('shown'));
+  revealOnScroll(els);
 }
 function toggleMenu() { $('mobMenu').classList.toggle('open'); $('burger').classList.toggle('open'); }
 function closeMob() { $('mobMenu').classList.remove('open'); $('burger').classList.remove('open'); }
 function toggleSub(id) { $(id).classList.toggle('open'); }
+let navTick = false;
 window.addEventListener('scroll', () => {
-  const n = $('mainNav');
-  if (n.classList.contains('visible')) n.classList.toggle('scrolled', window.scrollY > 20);
-});
+  if (navTick) return;
+  navTick = true;
+  requestAnimationFrame(() => {
+    navTick = false;
+    const n = $('mainNav');
+    if (n.classList.contains('visible')) n.classList.toggle('scrolled', window.scrollY > 20);
+  });
+}, { passive: true });
 
 /* ════════════════════════════════════════════════════════════════
    PRODUCT GRID, FILTERS, SEARCH
@@ -232,6 +266,8 @@ function renderProds(list) {
       `${p.oldPrice ? `<span class="prod-price-old">${naira(p.oldPrice)}</span>` : ''}</div>` +
       `<button class="view-btn">${p.soldOut ? 'Sold Out' : 'View Product \u2192'}</button></div></div>`;
   }).join('');
+  revealCards.reset();
+  revealCards(g.querySelectorAll('.prod-card'));
 }
 
 /* ── what the grid shows: category/special/search → toolbar filters → sort ── */
@@ -991,52 +1027,149 @@ function toggleTheme() { if (!_slideRunning) applyTheme(currentTheme === 'light'
 applyTheme(currentTheme, false);
 
 /* ════════════════════════════════════════════════════════════════
+   NO PULL-TO-REFRESH
+   A downward drag while the page is already at the very top makes phone browsers reload the page. Stop only that gesture
+   (the CSS overscroll-behavior rule covers Chrome on Android, this covers iPhone browsers). Normal scrolling, scrolling
+   inside the cart / lightbox, horizontal strips and pinch-zoom are all left alone.
+   ════════════════════════════════════════════════════════════════ */
+(function noPullToRefresh() {
+  let startY = 0, startX = 0, chain = [], tracking = false;
+  const scrollableAncestors = (el) => {                                 // inner scrollers the finger is on (cart list, filter strip...)
+    const out = [];
+    for (; el && el !== document.body && el !== document.documentElement; el = el.parentElement) {
+      const oy = getComputedStyle(el).overflowY;
+      if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight) out.push(el);
+    }
+    return out;
+  };
+  document.addEventListener('touchstart', (e) => {
+    tracking = e.touches.length === 1;
+    if (!tracking) return;
+    startY = e.touches[0].clientY; startX = e.touches[0].clientX;
+    chain = scrollableAncestors(e.target);
+  }, { passive: true });
+  document.addEventListener('touchmove', (e) => {
+    if (!tracking || e.touches.length !== 1 || !e.cancelable) return;
+    const dy = e.touches[0].clientY - startY, dx = e.touches[0].clientX - startX;
+    if (dy <= 0 || Math.abs(dx) > Math.abs(dy)) return;                 // not a downward pull
+    if ((window.scrollY || document.documentElement.scrollTop) > 0) return;   // page can still scroll up: let it
+    if (chain.some((el) => el.scrollTop > 0)) return;                   // an inner list can still scroll up: let it
+    e.preventDefault();
+  }, { passive: false });
+  const stop = () => { tracking = false; };
+  document.addEventListener('touchend', stop, { passive: true });
+  document.addEventListener('touchcancel', stop, { passive: true });
+})();
+
+/* ════════════════════════════════════════════════════════════════
    LANDING PARTICLES
+   Kept light for phones: smaller sharper-than-needed canvas, fewer dots, ~30 frames/s, frozen while the page is being
+   scrolled, and never re-allocated for the tiny height changes caused by the browser's address bar hiding.
    ════════════════════════════════════════════════════════════════ */
 (function particles() {
   const canvas = $('particleCanvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  const colors = ['#38bdf8', '#7dd3fc', '#bae6fd', '#0ea5e9', '#ffffff', '#e0f2fe'];
-  let W, H;
-  const resize = () => { W = canvas.width = canvas.offsetWidth; H = canvas.height = canvas.offsetHeight; };
-  resize();
-  window.addEventListener('resize', resize);
+  // Colours that read well on each background (white dots would vanish on the light page)
+  const PALETTES = {
+    light: ['#0ea5e9', '#38bdf8', '#7dd3fc', '#0284c7', '#60a5fa', '#93c5fd'],
+    dark: ['#38bdf8', '#7dd3fc', '#bae6fd', '#0ea5e9', '#e0f2fe', '#ffffff']
+  };
+  const ALPHA = { light: [0.35, 0.8], dark: [0.2, 0.75] };
+  const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+  const lite = () => (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || window.innerWidth <= 768;
+  let W = 0, H = 0, dpr = 1, list = [], scrolling = false, scrollTimer = 0, last = 0;
+  const still = reducedMotion();
+
   class Particle {
-    constructor(startAnywhere) { this.reset(); if (startAnywhere) this.y = Math.random() * H; }
-    reset() {
-      this.x = Math.random() * W; this.y = Math.random() * H + H;
-      this.r = Math.random() * 3 + 1;
-      this.color = colors[Math.floor(Math.random() * colors.length)];
-      this.speedY = -(Math.random() * 1.5 + 0.5); this.speedX = (Math.random() - 0.5) * 0.8;
-      this.opacity = Math.random() * 0.6 + 0.2;
-      this.wobble = Math.random() * Math.PI * 2; this.wobbleSpeed = Math.random() * 0.03 + 0.01;
-      this.shape = Math.random() > 0.5 ? 'circle' : 'square';
-      this.rotation = Math.random() * Math.PI * 2; this.rotSpeed = (Math.random() - 0.5) * 0.05;
+    constructor(anywhere) { this.reset(anywhere); }
+    reset(anywhere) {
+      this.x = Math.random() * W;
+      this.y = anywhere ? Math.random() * H : H + Math.random() * 40;   // new ones drift up from the bottom edge
+      this.r = Math.random() * 2.6 + 1;
+      this.c = Math.floor(Math.random() * 6);
+      this.a = Math.random();                                           // 0..1 -> mapped into the theme's alpha range
+      this.sy = -(Math.random() * 1.1 + 0.35); this.sx = (Math.random() - 0.5) * 0.6;
+      this.wob = Math.random() * Math.PI * 2; this.wobS = Math.random() * 0.03 + 0.01;
+      this.square = Math.random() > 0.5;
+      this.rot = Math.random() * Math.PI * 2; this.rotS = (Math.random() - 0.5) * 0.05;
     }
-    update() {
-      this.wobble += this.wobbleSpeed;
-      this.x += this.speedX + Math.sin(this.wobble) * 0.5;
-      this.y += this.speedY; this.rotation += this.rotSpeed;
-      if (this.y < -20) this.reset();
+    update(k) {                                                         // k = how many 60fps frames have passed (keeps speed the same at any frame rate)
+      this.wob += this.wobS * k;
+      this.x += (this.sx + Math.sin(this.wob) * 0.45) * k;
+      this.y += this.sy * k; this.rot += this.rotS * k;
+      if (this.y < -20) this.reset(false);
+      if (this.x < -20) this.x = W + 10; else if (this.x > W + 20) this.x = -10;
     }
-    draw() {
-      ctx.save(); ctx.globalAlpha = this.opacity; ctx.fillStyle = this.color;
-      ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
-      if (this.shape === 'circle') { ctx.beginPath(); ctx.arc(0, 0, this.r, 0, Math.PI * 2); ctx.fill(); }
-      else ctx.fillRect(-this.r, -this.r, this.r * 2, this.r * 2);
-      ctx.restore();
+    draw(pal, alpha) {
+      const c = Math.cos(this.rot) * dpr, s = Math.sin(this.rot) * dpr;
+      ctx.setTransform(c, s, -s, c, this.x * dpr, this.y * dpr);
+      ctx.globalAlpha = alpha[0] + this.a * (alpha[1] - alpha[0]);
+      ctx.fillStyle = pal[this.c];
+      if (this.square) ctx.fillRect(-this.r, -this.r, this.r * 2, this.r * 2);
+      else { ctx.beginPath(); ctx.arc(0, 0, this.r, 0, Math.PI * 2); ctx.fill(); }
     }
   }
-  const list = Array.from({ length: 80 }, () => new Particle(true));
-  (function animate() {
-    const landing = $('landing');
-    if (landing && landing.classList.contains('active')) {
-      ctx.clearRect(0, 0, W, H);
-      list.forEach((p) => { p.update(); p.draw(); });
+
+  // One dot for roughly every 10,000 px² of screen (fewer on phones), so a phone and a big monitor look equally full
+  const wanted = () => lite()
+    ? Math.max(50, Math.min(80, Math.round((W * H) / 9000)))
+    : Math.max(40, Math.min(160, Math.round((W * H) / 10000)));
+  function seed(n) {                                                    // an even sprinkle (jittered grid): no part of the screen starts empty
+    const cols = Math.max(1, Math.round(Math.sqrt(n * W / H))), rows = Math.ceil(n / cols);
+    for (let i = 0; i < n; i++) {
+      const p = new Particle(true);
+      p.x = ((i % cols) + Math.random()) / cols * W;
+      p.y = (Math.floor(i / cols) + Math.random()) / rows * H;
+      list.push(p);
     }
+  }
+  function paint() {
+    const t = isDark() ? 'dark' : 'light';
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    list.forEach((p) => p.draw(PALETTES[t], ALPHA[t]));
+  }
+  function fit() {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    if (!w || !h) return;                                               // landing page is hidden right now
+    // The address bar sliding away while scrolling on a phone changes the height by ~50-120px: that is not a real resize,
+    // so don't wipe and rebuild the canvas for it (this used to look like the page flashing / refreshing).
+    if (W && w === W && Math.abs(h - H) < 160 && lite()) return;
+    const oldW = W, oldH = H;
+    W = w; H = h; dpr = Math.min(window.devicePixelRatio || 1, lite() ? 1 : 2);
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    if (oldW && oldH) list.forEach((p) => { p.x *= W / oldW; p.y *= H / oldH; });   // keep them spread out after a resize
+    const n = wanted();
+    if (!list.length) seed(n);
+    while (list.length < n) list.push(new Particle(true));
+    if (list.length > n) list.length = n;
+    paint();                                                            // resizing blanks a canvas: redraw straight away, no empty frame
+  }
+  let fitTimer = 0;
+  const fitSoon = () => { clearTimeout(fitTimer); fitTimer = setTimeout(fit, 120); };
+
+  if (window.ResizeObserver) new ResizeObserver(fitSoon).observe(canvas); else window.addEventListener('resize', fitSoon);
+  fit();
+  if (still) return;                                                    // reduced motion: a still sprinkle, no movement
+
+  window.addEventListener('scroll', () => {                             // let the browser spend its time on scrolling, not on dots
+    scrolling = true; clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => { scrolling = false; }, 140);
+  }, { passive: true });
+
+  (function animate(now) {
     requestAnimationFrame(animate);
-  })();
+    const landing = $('landing');
+    if (!W) { fit(); return; }
+    if (!landing || !landing.classList.contains('active') || scrolling || document.hidden) { last = 0; return; }
+    const gap = lite() ? 32 : 0;                                        // phones: about 30 frames a second
+    if (last && now - last < gap) return;
+    const k = last ? Math.min((now - last) / 16.67, 3) : 1;
+    last = now;
+    list.forEach((p) => p.update(k));
+    paint();
+  })(0);
 })();
 
 /* ════════════════════════════════════════════════════════════════
