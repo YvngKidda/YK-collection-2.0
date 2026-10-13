@@ -1,0 +1,187 @@
+/* Extra styles for the Supabase photo picker, login box and status messages.
+   Uses your existing colour variables, so light + dark themes keep working. */
+
+/* photo picker */
+.img-strip{display:flex;gap:.6rem;flex-wrap:wrap;margin:.35rem 0}
+.img-thumb{position:relative;width:84px;height:84px;border-radius:12px;overflow:hidden;border:2px solid var(--border);background:var(--bg2)}
+.img-thumb.cover{border-color:var(--sky-dark)}
+.img-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.img-thumb .img-x{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;border:none;background:rgba(12,45,74,.82);color:#fff;font-size:.7rem;line-height:1;cursor:pointer}
+.img-thumb .img-star{position:absolute;bottom:4px;left:4px;height:22px;padding:0 .45rem;border-radius:11px;border:none;background:rgba(255,255,255,.92);color:var(--sky-dark);font-size:.62rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif}
+.img-thumb.cover .img-star{background:var(--sky-dark);color:#fff;cursor:default}
+.photo-pick-btn{display:block;text-align:center;margin-top:.4rem;width:100%;padding:.85rem;border-radius:var(--r-sm);background:var(--sky-light);border:1.5px dashed var(--sky);color:var(--sky-dark);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.photo-pick-btn.busy{opacity:.6;pointer-events:none}
+[data-theme="dark"] .photo-pick-btn{background:#0d1a2b !important;border-color:#1e4a6b !important;color:#38bdf8 !important}
+[data-theme="dark"] .img-thumb{background:#0d1220;border-color:#1e2d45}
+[data-theme="dark"] .img-thumb.cover{border-color:#38bdf8}
+
+/* admin login: email + password stacked, normal (not letter-spaced) text */
+.admin-login-box .admin-pass-inp{letter-spacing:normal;text-align:left}
+
+/* store status messages inside the product grid */
+.grid-msg{grid-column:1/-1;text-align:center;padding:3rem 1.25rem;color:var(--text3);font-size:.92rem;line-height:1.7}
+.grid-msg button{margin-top:1rem;background:var(--sky);color:#fff;border:none;padding:.65rem 1.6rem;border-radius:50px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer}
+.btn-busy{opacity:.6;pointer-events:none}
+
+/* ── LOGO (yk mark) ── */
+/* nav: the logo image replaces the old "YK" text box. Size still comes from your existing .yk-icon rules */
+.nav-logo img.yk-icon{background:none;padding:0;display:block;object-fit:contain;box-shadow:0 4px 14px rgba(14,165,233,.25)}
+/* landing page mark, above the "New Collection" badge */
+.land-logo{position:relative;z-index:1;width:88px;height:88px;border-radius:22px;display:block;margin:0 auto 1.4rem;box-shadow:0 12px 36px rgba(14,165,233,.35);opacity:0;animation:fadeUp .8s .2s forwards}
+@media(max-width:768px){.land-logo{width:72px;height:72px;border-radius:18px;margin-bottom:1.1rem}}
+
+/* ════════ UPDATE 2: sort/filter, size price, low stock, share, 360° ════════ */
+
+/* sort + filter toolbar */
+.shop-toolbar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;padding:1rem 0 .75rem}
+.tb-btn{display:inline-flex;align-items:center;gap:.4rem;background:var(--card);border:1.5px solid var(--border);color:var(--text);padding:.6rem 1.1rem;border-radius:50px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;-webkit-tap-highlight-color:transparent}
+.tb-btn[aria-expanded="true"]{border-color:var(--sky-dark);color:var(--sky-dark)}
+.tb-badge{min-width:20px;height:20px;padding:0 .35rem;border-radius:10px;background:var(--sky-dark);color:#fff;font-size:.7rem;align-items:center;justify-content:center}
+.tb-sort{display:inline-flex;align-items:center;gap:.5rem;font-size:.82rem;font-weight:600;color:var(--text2)}
+.tb-sort select,.fp-grp select{background:var(--card);border:1.5px solid var(--border);color:var(--text);padding:.55rem .8rem;border-radius:12px;font-size:.85rem;font-family:'DM Sans',sans-serif;max-width:100%}
+.tb-count{margin-left:auto;font-size:.8rem;color:var(--text3)}
+.filter-panel{display:none;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);padding:1.1rem 1.2rem;margin-bottom:1rem}
+.filter-panel.open{display:block}
+.fp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1.1rem 1.5rem}
+.fp-lbl{font-size:.68rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:.5rem}
+.fp-price{display:flex;align-items:center;gap:.5rem;color:var(--text3)}
+.fp-price input{width:100%;min-width:0;background:var(--bg2);border:1.5px solid var(--border);color:var(--text);padding:.55rem .7rem;border-radius:12px;font-size:.85rem;font-family:'DM Sans',sans-serif}
+.size-chips{display:flex;flex-wrap:wrap;gap:.4rem}
+.size-chip{min-width:42px;height:38px;padding:0 .7rem;border:1.5px solid var(--border);background:var(--card);color:var(--text2);border-radius:10px;font-size:.8rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+.size-chip.on{background:var(--sky);border-color:var(--sky-dark);color:#fff}
+.fp-check{display:flex;align-items:center;gap:.5rem;font-size:.88rem;color:var(--text2);cursor:pointer}
+.fp-check input{width:18px;height:18px;accent-color:var(--sky-dark)}
+.fp-empty{font-size:.8rem;color:var(--text3)}
+.fp-reset{margin-top:1rem;background:none;border:none;color:var(--sky-dark);font-weight:700;font-size:.82rem;cursor:pointer;font-family:'DM Sans',sans-serif;padding:0}
+[data-theme="dark"] .tb-btn,[data-theme="dark"] .filter-panel,[data-theme="dark"] .size-chip{background:#131a27 !important;border-color:#1e2d45 !important;color:#e2e8f0 !important}
+[data-theme="dark"] .size-chip.on{background:#0ea5e9 !important;color:#fff !important}
+[data-theme="dark"] .tb-sort select,[data-theme="dark"] .fp-grp select,[data-theme="dark"] .fp-price input{background:#0d1220 !important;border-color:#1e2d45 !important;color:#e2e8f0 !important}
+
+/* price follows the chosen size */
+
+/* low stock + share */
+.low-stock{font-size:.74rem;font-weight:700;color:#d97706;margin-bottom:.4rem}
+.low-stock-pill{align-items:center;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);color:#b45309;font-size:.78rem;font-weight:700;padding:.35rem .85rem;border-radius:50px;margin:-.9rem 0 1.1rem}
+.share-btn{width:100%;margin:.9rem 0 .25rem;background:var(--card);border:1.5px solid var(--border);color:var(--text2);padding:.8rem 1rem;border-radius:50px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+.share-btn:hover{border-color:var(--sky);color:var(--sky-dark)}
+[data-theme="dark"] .share-btn{background:#131a27 !important;border-color:#1e2d45 !important;color:#cbd5e1 !important}
+
+/* 360° tags + viewer */
+.spin-tag{position:absolute;right:.6rem;bottom:.6rem;z-index:2;background:rgba(12,45,74,.82);color:#fff;font-size:.66rem;font-weight:700;padding:.25rem .6rem;border-radius:50px;letter-spacing:.5px}
+.spin-pill{position:absolute;left:.75rem;bottom:.75rem;z-index:3;background:rgba(12,45,74,.88);color:#fff;border:none;padding:.5rem .95rem;border-radius:50px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.spin-overlay{position:fixed;inset:0;z-index:9990;background:rgba(5,12,25,.94);backdrop-filter:blur(6px);display:none;flex-direction:column;align-items:center;justify-content:center;padding:1rem;gap:.8rem}
+.spin-overlay.open{display:flex}
+.spin-close{position:absolute;top:1rem;right:1rem;width:42px;height:42px;border-radius:50%;border:2px solid #fff;background:rgba(255,255,255,.12);color:#fff;font-size:1.1rem;cursor:pointer;z-index:2}
+.spin-title{color:#fff;font-weight:600;font-size:.95rem;max-width:80vw;text-align:center;min-height:1.2em}
+.spin-stage{position:relative;width:min(92vw,560px);height:min(66vh,560px);background:#fff;border-radius:18px;overflow:hidden;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.spin-stage.grabbing{cursor:grabbing}
+.spin-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.spin-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#fff;color:#475569;font-weight:600;font-size:.9rem}
+.spin-hint{position:absolute;left:50%;bottom:.9rem;transform:translateX(-50%);background:rgba(12,45,74,.85);color:#fff;font-size:.78rem;font-weight:600;padding:.4rem .95rem;border-radius:50px;opacity:0;transition:opacity .4s;pointer-events:none;white-space:nowrap}
+.spin-hint.show{opacity:1}
+.spin-controls{display:flex;gap:.7rem;align-items:center}
+.spin-controls button{height:44px;min-width:44px;padding:0 1rem;border-radius:50px;border:1.5px solid rgba(255,255,255,.5);background:rgba(255,255,255,.12);color:#fff;font-size:1rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:.4rem}
+
+/* admin: 360° frames */
+.spin-toggle{display:flex;align-items:center;gap:.6rem;font-size:.9rem;font-weight:600;color:var(--text);margin:.3rem 0 .6rem;cursor:pointer}
+.spin-toggle input{width:20px;height:20px;accent-color:var(--sky-dark)}
+.spin-strip .img-thumb{width:62px;height:62px;border-radius:10px}
+.spin-n{position:absolute;left:4px;bottom:4px;min-width:20px;height:20px;border-radius:10px;background:rgba(12,45,74,.82);color:#fff;font-size:.62rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+.spin-count{font-size:.78rem;color:var(--text3);margin:.2rem 0 .3rem}
+.spin-tools{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem}
+.spin-tools button{background:var(--sky-light);border:1px solid var(--sky);color:var(--sky-dark);padding:.5rem .9rem;border-radius:50px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif}
+[data-theme="dark"] .spin-tools button{background:#0d1a2b !important;border-color:#1e4a6b !important;color:#38bdf8 !important}
+
+/* ── UPDATE 3: icons + size-based photo ── */
+/* Icons are inline SVG (see the sprite at the top of index.html). They are drawn in the text colour and sized by font-size. */
+.ic{width:1em;height:1em;display:inline-block;vertical-align:-.14em;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ic-chev{width:.8em;height:.8em;margin-left:.2em;vertical-align:-.05em}
+.ic-ok{color:var(--green,#16a34a)}
+.ic-ph{color:var(--sky);opacity:.6;stroke-width:1.2}
+.ic-xl{width:8rem;height:8rem}
+.land-feat-icon .ic,.val-icon .ic,.ci-icon .ic,.newsletter-icon .ic,.cart-empty-icon .ic,.admin-login-icon .ic,.about-img .ic,.form-ok-ic .ic,.comp-ok-ic .ic{stroke-width:1.6}
+.land-feat-icon,.val-icon,.ci-icon,.newsletter-icon,.admin-login-icon,.about-img{color:var(--sky-dark)}
+.search-icon .ic{width:1.1em;height:1.1em}
+.gallery-arrow .ic,.lightbox-arrow .ic{width:1.3em;height:1.3em}
+.spin-controls .ic{width:1.2em;height:1.2em}
+.spin-close .ic{width:1.3em;height:1.3em}
+.spin-close{display:inline-flex;align-items:center;justify-content:center}
+.close-cart .ic,.edit-modal-close .ic,.lightbox-close .ic{width:1.1em;height:1.1em}
+.theme-toggle .ic{width:1.25em;height:1.25em}
+.comp-tab .ic,.photo-pick-btn .ic,.admin-add-btn .ic,.admin-clear-btn .ic,.spin-tools .ic,.share-btn .ic,.buy-now-btn .ic,.atc-btn .ic,.newsletter-btn .ic,.tb-btn .ic,.admin-edit-btn .ic,.admin-view-btn .ic,.admin-comp-del .ic,.admin-del-btn .ic,.edit-save-btn .ic{width:1.1em;height:1.1em;margin-right:.3em}
+.admin-del-btn .ic{margin-right:0}
+.img-x .ic{width:.8em;height:.8em;margin:0}
+.wa-float-btn .ic{width:1em;height:1em;margin:0}
+.low-stock .ic,.low-stock-pill .ic,.spin-tag .ic,.spin-pill .ic,.spin-hint .ic{width:1.05em;height:1.05em;margin-right:.2em}
+.ship-box .ic{width:1.1em;height:1.1em}
+.ship-txt .ic{width:1em;height:1em;margin-left:.2em}
+.land-badge .ic{width:1em;height:1em;margin-right:.2em;vertical-align:-.12em}
+
+/* Size -> photo size. script.js sets --size-scale on #detGallery (M = 1, each size up = +5%, each size down = -5%).
+   The photo is drawn at 90% of the frame when the scale is 1, so bigger sizes have room to grow without being cut off. */
+.det-gallery-slide{overflow:hidden}
+.det-gallery-slide img,.det-gallery-slide .ic-ph{transform:scale(calc(var(--size-scale, 1) * .9));transition:transform .45s cubic-bezier(.4,0,.2,1)}
+@media (prefers-reduced-motion:reduce){.det-gallery-slide img,.det-gallery-slide .ic-ph{transition:none}}
+
+/* small alignment fixes */
+.search-icon,.search-clear{top:calc(50% + .75rem)}          /* the search box has padding on top only, so "50%" sat too high */
+@media(max-width:768px){.search-icon,.search-clear{top:calc(50% + .5rem)}}
+.ship-box .ic{color:var(--green)}
+
+/* dark mode: remove the pale "white orb" glow behind the landing text */
+[data-theme="dark"] .orb3{display:none!important}
+
+/* ══ UPDATE 4: fluid layout + smoother scrolling ══ */
+
+/* Page changes: quick fade-out, then the new page glides in (works with display:none -> block, unlike a plain transition) */
+.page.active{animation:pageIn .42s cubic-bezier(.22,.8,.3,1) both}
+.page.leaving{animation:pageOut .15s ease-in forwards}
+@keyframes pageIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes pageOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-10px)}}
+
+/* Product photo height follows the screen. (The old rule was stuck at 420px everywhere because the fixed height
+   was declared after the phone rules.) */
+.det-gallery{--gal-h:clamp(340px,40vw,520px)}
+@media(max-width:768px){.det-gallery{--gal-h:clamp(280px,min(92vw,72vh),520px)}}
+@media(max-height:520px) and (orientation:landscape){.det-gallery{--gal-h:clamp(200px,72vh,360px)}}
+.det-gallery-main,.det-gallery-slides,.det-gallery-slide,.det-gallery-slide img{height:var(--gal-h)}
+.det-gallery-main{touch-action:pan-y pinch-zoom}
+
+/* Product cards fade and rise as they scroll into view (script.js adds .in). translate is separate from transform,
+   so the hover lift still works. Browsers without it simply fade. */
+.prod-card{animation:none;transition:opacity .55s ease,translate .55s cubic-bezier(.22,.8,.3,1),transform .35s cubic-bezier(.4,0,.2,1),box-shadow .35s,border-color .35s}
+.prod-card:not(.in){opacity:0;translate:0 26px}
+.prod-card.in{opacity:1;translate:0 0}
+.prod-card{transform-style:flat;perspective:none}   /* the 3D setting made every card a heavy separate layer */
+
+/* Less paint work while scrolling on phones */
+nav,.mob-menu{backdrop-filter:none;-webkit-backdrop-filter:none}   /* the bar is ~96% solid, so the blur showed nothing but repainted every frame */
+@media(max-width:768px){.land-feat,.land-btn-sec{backdrop-filter:none;-webkit-backdrop-filter:none}}
+.shop-filter-inner,.sizes,.lightbox-thumbs,.img-strip,.size-chips{overscroll-behavior-x:contain}
+@media(hover:none){.prod-card:hover{transform:none}.prod-card:hover .prod-thumb img{transform:none!important}}
+
+/* Wider screens use the room; phones keep their padding */
+.shop-body{padding-inline:clamp(1rem,3.2vw,3rem)}
+@media(min-width:1500px){.shop-body{max-width:1500px}.det-inner{max-width:1200px}}
+@media(min-width:2000px){.shop-body{max-width:1800px}.det-inner{max-width:1300px}}
+
+@media(prefers-reduced-motion:reduce){
+  .page.active,.page.leaving{animation:none}
+  .prod-card:not(.in){translate:none}
+  html{scroll-behavior:auto}
+}
+
+/* ══ UPDATE 5: particles across the whole welcome screen + feature cards on one line ══ */
+/* The canvas used to stay at the browser's default 300x150 size (top corner only). Now it fills the whole landing page. */
+#particleCanvas{width:100%;height:100%;display:block}
+
+/* Landing feature cards: one row on computers, 2x2 on tablets, stacked on phones (phones keep the rules in styles.css) */
+@media(min-width:1000px){
+  .land-features{flex-wrap:nowrap;max-width:min(1100px,100%);width:auto}
+  .land-feat{flex:0 1 auto;min-width:0}
+  .land-feat-title,.land-feat-sub{white-space:nowrap}
+}
+@media(min-width:769px) and (max-width:999px){
+  .land-features{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:min(560px,100%);max-width:none}
+  .land-feat{width:auto;max-width:none}
+}
